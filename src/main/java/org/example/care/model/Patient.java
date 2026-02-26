@@ -6,11 +6,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.List;
 
 @Entity
 @Table(name = "patients")
@@ -26,6 +29,9 @@ public class Patient {
     private Long id;
 
     @Column(nullable = false)
+    private Long userId;
+
+    @Column(nullable = false)
     private String name;
 
     @Column(nullable = false)
@@ -39,4 +45,6 @@ public class Patient {
 
     @Column(length = 2000)
     private String chronicConditions;
+
+    private List<String> currentMeds;
 }

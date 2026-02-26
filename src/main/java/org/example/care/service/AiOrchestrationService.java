@@ -1,9 +1,12 @@
 package org.example.care.service;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.example.care.dto.SafetyCheckRequest;
+import org.example.care.model.Patient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
@@ -17,6 +20,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class AiOrchestrationService {
 
     private final WebClient aiWebClient;
+
+    @Autowired
+    private PatientService patientService;
 
     public AiOrchestrationService(WebClient aiWebClient) {
         this.aiWebClient = aiWebClient;
@@ -46,10 +52,18 @@ public class AiOrchestrationService {
     }
 
     public Map<String, Object> checkSafety(SafetyCheckRequest request) {
+        Patient patient = patientService.getPatientById(request.getPatientId());
+        List<String> currentDrugs = patient.getCurrentMeds();
+        Map<String, Object> requestBody = Map.of(
+                "patient_id", patient.getId(),
+                "current_meds", currentDrugs,
+                "new_drugs", request.getNewDrugs()
+        );
+
         return aiWebClient.post()
                 .uri("/check_safety")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(Objects.requireNonNull(request))
+                .bodyValue(Objects.requireNonNull(requestBody))
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
                 })

@@ -3,8 +3,8 @@ package org.example.care.controller;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.example.care.dto.MedicalRecordResponse;
-import org.example.care.dto.SafetyCheckRequest;
+
+import org.example.care.dto.*;
 import org.example.care.exception.ResourceNotFoundException;
 import org.example.care.model.MedicalRecord;
 import org.example.care.model.MedicalRecordType;
@@ -23,13 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -54,8 +48,22 @@ public class DoctorController {
 
     @PreAuthorize("hasRole('DOCTOR')")
     @PostMapping("/doctor/patients")
-    public ResponseEntity<Patient> createPatient(@Validated @RequestBody Patient patient) {
-        return ResponseEntity.ok(patientService.save(patient));
+    public ResponseEntity<Patient> createPatient(@Validated @RequestBody CreatePatient createPatient) {
+        return ResponseEntity.ok(patientService.save(createPatient));
+    }
+
+    @PreAuthorize("hasRole('DOCTOR')")
+    @PatchMapping("/doctor/patients/{patientId}")
+    public ResponseEntity<Patient> updatePatient(@PathVariable Long patientId, @RequestBody UpdatePatient updatePatient) {
+        Patient updatedPatient = patientService.updatePatient(patientId, updatePatient);
+        return ResponseEntity.ok(updatedPatient);
+    }
+
+    @PreAuthorize("hasAnyRole('DOCTOR','PATIENT')")
+    @GetMapping("/doctor/patients/{patientId}")
+    public ResponseEntity<PatientRetreival> getPatient(@PathVariable Long patientId) {
+        PatientRetreival patientRetreival = patientService.getPatientFullDetails(patientId);
+        return ResponseEntity.ok(patientRetreival);
     }
 
     @PreAuthorize("hasRole('DOCTOR')")
@@ -63,6 +71,7 @@ public class DoctorController {
     public ResponseEntity<List<Patient>> getPatients(@RequestParam(name = "q", required = false) String query) {
         return ResponseEntity.ok(patientService.searchPatients(query));
     }
+
 
     @PreAuthorize("hasRole('DOCTOR')")
     @PostMapping(path = "/doctor/patients/{patientId}/records/xray", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -119,7 +128,6 @@ public class DoctorController {
     @PreAuthorize("hasAnyRole('DOCTOR', 'PATIENT')")
     @GetMapping("/patients/{patientId}/records")
     public ResponseEntity<List<MedicalRecordResponse>> getPatientRecords(@PathVariable Long patientId) {
-        validatePatientAccess(patientId);
 
         List<MedicalRecordResponse> records = medicalRecordRepository.findByPatientId(patientId).stream()
                 .map(MedicalRecordResponse::from)
@@ -127,6 +135,7 @@ public class DoctorController {
 
         return ResponseEntity.ok(records);
     }
+
 
     @PreAuthorize("hasAnyRole('DOCTOR', 'PATIENT')")
     @GetMapping("/patients/{patientId}/records/{recordId}/file")

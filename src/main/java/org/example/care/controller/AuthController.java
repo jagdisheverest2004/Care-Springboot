@@ -65,4 +65,26 @@ public class AuthController {
                 .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
                 .body(body);
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<AuthResponse> logout() {
+        // Create a cookie with the same name, but maxAge = 0 to delete it
+        ResponseCookie deleteCookie = ResponseCookie.from(
+                        Objects.requireNonNull(jwtProperties.getCookieName()),
+                        "")
+                .httpOnly(true)
+                .secure(jwtProperties.isCookieSecure())
+                .path("/")
+                .sameSite("Strict")
+                .maxAge(0) // Expire the cookie immediately
+                .build();
+
+        AuthResponse body = AuthResponse.builder()
+                .message("Logout successful")
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
+                .body(body);
+    }
 }

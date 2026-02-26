@@ -2,11 +2,13 @@ package org.example.care.service;
 
 import org.example.care.dto.LoginRequest;
 import org.example.care.dto.RegisterRequest;
+import org.example.care.exception.ResourceNotFoundException;
 import org.example.care.model.Role;
 import org.example.care.model.User;
 import org.example.care.repository.UserRepository;
 import org.example.care.security.JwtService;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,11 +34,13 @@ public class AuthService {
     }
 
     public User register(RegisterRequest request) {
+        // Use IllegalStateException for conflicts (mapped to 409 in GlobalHandler)
+        // or a custom ConflictException.
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new IllegalArgumentException("Username already exists");
+            throw new IllegalArgumentException("Username '" + request.getUsername() + "' is already taken");
         }
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new IllegalArgumentException("Email '" + request.getEmail() + "' is already registered");
         }
 
         Role role = request.getRole() == null ? Role.PATIENT : request.getRole();
@@ -52,11 +56,14 @@ public class AuthService {
     }
 
     public AuthResult login(LoginRequest request) {
+        // authenticationManager.authenticate() automatically throws
+        // BadCredentialsException if the password or username is wrong.
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
+        // Use your custom ResourceNotFoundException if the user doesn't exist
         User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User account not found"));
 
         String token = jwtService.generateToken(user);
         return new AuthResult(user, token);

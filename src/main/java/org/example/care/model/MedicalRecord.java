@@ -36,6 +36,9 @@ public class MedicalRecord {
     @Column(nullable = false)
     private Long doctorId;
 
+    @Column(nullable = false)
+    private String fileName;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MedicalRecordType type;

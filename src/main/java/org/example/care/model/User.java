@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "app_users")
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -39,4 +39,8 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
+    private Long patientId;
+
+    private Long doctorId;
 }
