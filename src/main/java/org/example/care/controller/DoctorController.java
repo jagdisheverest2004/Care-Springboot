@@ -85,7 +85,7 @@ public class DoctorController {
         MedicalRecord record = MedicalRecord.builder()
                 .patientId(patientId)
                 .doctorId(user.getId())
-                .type(MedicalRecordType.XRAY)
+                .type(MedicalRecordType.IMAGE)
                 .summary(aiSummary.toString())
                 .build();
         fileService.storeFile(record, file);

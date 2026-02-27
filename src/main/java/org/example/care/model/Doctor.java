@@ -1,8 +1,8 @@
 package org.example.care.model;
 
-
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.List;
 
 @Entity
 @Table(name = "doctors")
@@ -14,18 +14,25 @@ import lombok.*;
 public class Doctor {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; // Matches User ID
 
-    @Column(nullable = false)
-    private Long userId;
-
-    @Column(nullable = false)
-    private String name;
+    @OneToOne
+    @MapsId
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @Column(nullable = false)
     private String specialization;
 
     @Column(nullable = false)
+    private String licenseNumber;
+
+    @Column(nullable = false)
+    private String hospitalName;
+
+    @Column(nullable = false)
     private String contactInfo;
+
+    @OneToMany(mappedBy = "doctor")
+    private List<MedicalRecord> treatedRecords;
 }

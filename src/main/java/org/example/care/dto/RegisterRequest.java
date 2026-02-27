@@ -21,4 +21,16 @@ public class RegisterRequest {
     private String email;
 
     private Role role = Role.PATIENT;
+
+    // Patient
+    private Integer age;
+    private String gender;
+    private String bloodGroup;
+
+    // Doctor
+    private String specialization;
+    private String licenseNumber;
+    private String hospitalName;
+    private String contactInfo;
+
 }

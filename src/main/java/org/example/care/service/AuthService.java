@@ -3,10 +3,15 @@ package org.example.care.service;
 import org.example.care.dto.LoginRequest;
 import org.example.care.dto.RegisterRequest;
 import org.example.care.exception.ResourceNotFoundException;
+import org.example.care.model.Doctor;
+import org.example.care.model.Patient;
 import org.example.care.model.Role;
 import org.example.care.model.User;
+import org.example.care.repository.DoctorRepository;
+import org.example.care.repository.PatientRepository;
 import org.example.care.repository.UserRepository;
 import org.example.care.security.JwtService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,6 +23,13 @@ import org.springframework.stereotype.Service;
 @SuppressWarnings("null")
 public class AuthService {
 
+    @Autowired
+    private DoctorRepository doctorRepository;
+
+    @Autowired
+    private PatientRepository patientRepository;
+
+    @Autowired
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -34,25 +46,33 @@ public class AuthService {
     }
 
     public User register(RegisterRequest request) {
-        // Use IllegalStateException for conflicts (mapped to 409 in GlobalHandler)
-        // or a custom ConflictException.
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new IllegalArgumentException("Username '" + request.getUsername() + "' is already taken");
-        }
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email '" + request.getEmail() + "' is already registered");
-        }
-
-        Role role = request.getRole() == null ? Role.PATIENT : request.getRole();
-
         User user = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .email(request.getEmail())
-                .role(role)
+                .role(request.getRole())
                 .build();
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        if (request.getRole() == Role.DOCTOR) {
+            Doctor doctor = Doctor.builder()
+                    .user(savedUser)
+                    .specialization(request.getSpecialization())
+                    .licenseNumber(request.getLicenseNumber())
+                    .hospitalName(request.getHospitalName())
+                    .build();
+            doctorRepository.save(doctor);
+        } else {
+            Patient patient = Patient.builder()
+                    .user(savedUser)
+                    .age(request.getAge())
+                    .gender(request.getGender())
+                    .bloodGroup(request.getBloodGroup())
+                    .build();
+            patientRepository.save(patient);
+        }
+        return savedUser;
     }
 
     public AuthResult login(LoginRequest request) {

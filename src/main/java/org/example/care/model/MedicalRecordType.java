@@ -1,6 +1,6 @@
 package org.example.care.model;
 
 public enum MedicalRecordType {
-    XRAY,
+    IMAGE,
     REPORT
 }

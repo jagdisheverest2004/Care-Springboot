@@ -1,18 +1,7 @@
 package org.example.care.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotEmpty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
+import jakarta.persistence.*;
+import lombok.*;
 import java.util.List;
 
 @Entity
@@ -25,14 +14,12 @@ import java.util.List;
 public class Patient {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; // Matches User ID
 
-    @Column(nullable = false)
-    private Long userId;
-
-    @Column(nullable = false)
-    private String name;
+    @OneToOne
+    @MapsId
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @Column(nullable = false)
     private Integer age;
@@ -46,5 +33,11 @@ public class Patient {
     @Column(length = 2000)
     private String chronicConditions;
 
+    @ElementCollection // Required for List<String> persistence
+    @CollectionTable(name = "patient_medications", joinColumns = @JoinColumn(name = "patient_id"))
+    @Column(name = "medication")
     private List<String> currentMeds;
+
+    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
+    private List<MedicalRecord> medicalRecords;
 }
