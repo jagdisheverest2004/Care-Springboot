@@ -29,19 +29,20 @@ public class AiOrchestrationService {
     }
 
     public Map<String, Object> analyzeXray(MultipartFile file) {
-        MultipartBodyBuilder bodyBuilder = multipartBody(file);
+        // For X-rays, Flask expects the key "file"
+        MultipartBodyBuilder bodyBuilder = multipartBody(file, "file");
         return aiWebClient.post()
                 .uri("/analyze_xray")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
-                })
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                 .block();
     }
 
     public String summarizeReports(MultipartFile file) {
-        MultipartBodyBuilder bodyBuilder = multipartBody(file);
+        // CRITICAL FIX: Flask expects the key "report" for this endpoint
+        MultipartBodyBuilder bodyBuilder = multipartBody(file, "report");
         return aiWebClient.post()
                 .uri("/summarize_reports")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
@@ -65,21 +66,26 @@ public class AiOrchestrationService {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(Objects.requireNonNull(requestBody))
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
-                })
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                 .block();
     }
 
-    private MultipartBodyBuilder multipartBody(MultipartFile file) {
+    /**
+     * Updated helper to accept a dynamic key name
+     */
+    private MultipartBodyBuilder multipartBody(MultipartFile file, String keyName) {
         MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
         try {
             String fileName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "upload.bin";
             String contentType = file.getContentType() != null
                     ? file.getContentType()
                     : MediaType.APPLICATION_OCTET_STREAM_VALUE;
-            bodyBuilder.part("file", file.getBytes())
+
+            // Map the file to the specific keyName required by the Flask endpoint
+            bodyBuilder.part(keyName, file.getBytes())
                     .filename(fileName)
                     .contentType(MediaType.parseMediaType(contentType));
+
             return bodyBuilder;
         } catch (IOException ex) {
             throw new IllegalArgumentException("Unable to process uploaded file");

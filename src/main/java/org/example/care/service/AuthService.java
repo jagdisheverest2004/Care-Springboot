@@ -46,6 +46,7 @@ public class AuthService {
         this.jwtService = jwtService;
     }
 
+    @Transactional
     public User register(RegisterRequest request) {
         User user = User.builder()
                 .username(request.getUsername())
@@ -62,6 +63,7 @@ public class AuthService {
                     .specialization(request.getSpecialization())
                     .licenseNumber(request.getLicenseNumber())
                     .hospitalName(request.getHospitalName())
+                    .contactInfo(request.getContactInfo())
                     .build();
             doctorRepository.save(doctor);
         } else {

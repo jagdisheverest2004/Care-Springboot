@@ -8,6 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface MedicalRecordRepository extends JpaRepository<MedicalRecord, Long> {
 
-    @Query("SELECT m FROM MedicalRecord m WHERE m.patient.id = :patientId")
+    @Query("SELECT m FROM MedicalRecord m WHERE m.id= :id and m.patient.id = :patientId")
     Optional<MedicalRecord> findByIdAndPatientId(Long id, Long patientId);
 }

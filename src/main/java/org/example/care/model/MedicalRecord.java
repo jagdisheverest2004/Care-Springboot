@@ -31,10 +31,9 @@ public class MedicalRecord {
     @Column(nullable = false)
     private MedicalRecordType type;
 
-    @Column(length = 4000)
+    @Column(columnDefinition = "TEXT")
     private String summary;
 
-    @Lob
     @Basic(fetch = FetchType.LAZY)
     @Column(name = "file_data", nullable = false, columnDefinition = "bytea")
     private byte[] fileData;

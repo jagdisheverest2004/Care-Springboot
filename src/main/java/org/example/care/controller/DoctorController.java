@@ -122,8 +122,7 @@ public class DoctorController {
         MedicalRecord saved = medicalRecordRepository.save(record);
 
         return ResponseEntity.ok(Map.of(
-                "record", MedicalRecordResponse.from(saved),
-                "narrative", narrative));
+                "record", MedicalRecordResponse.from(saved)));
     }
 
     @PreAuthorize("hasRole('DOCTOR')")
@@ -142,9 +141,13 @@ public class DoctorController {
                 .orElseThrow(() -> new ResourceNotFoundException("Medical record not found"));
         byte[] file = fileService.readFile(record);
 
+        // Determine the filename with proper extension
+        String fileName = (record.getFileName() != null) ? record.getFileName() : "record-" + recordId + ".pdf";
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=record-" + recordId)
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                // Setting a more specific type helps the browser recognize the file
+                .contentType(MediaType.APPLICATION_PDF)
                 .body(file);
     }
 
