@@ -4,13 +4,17 @@ import java.time.Duration;
 import java.util.Objects;
 import org.example.care.dto.AuthResponse;
 import org.example.care.dto.LoginRequest;
+import org.example.care.dto.PatientRegistrationRequest;
 import org.example.care.dto.RegisterRequest;
 import org.example.care.model.User;
+import org.example.care.security.CustomUserDetails;
 import org.example.care.security.JwtProperties;
 import org.example.care.service.AuthService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,13 +26,11 @@ import org.springframework.web.bind.annotation.RestController;
 @SuppressWarnings("null")
 public class AuthController {
 
-    private final AuthService authService;
-    private final JwtProperties jwtProperties;
+    @Autowired
+    private AuthService authService;
 
-    public AuthController(AuthService authService, JwtProperties jwtProperties) {
-        this.authService = authService;
-        this.jwtProperties = jwtProperties;
-    }
+    @Autowired
+    private JwtProperties jwtProperties;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Validated @RequestBody RegisterRequest request) {

@@ -18,6 +18,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @SuppressWarnings("null")
@@ -87,6 +88,48 @@ public class AuthService {
 
         String token = jwtService.generateToken(user);
         return new AuthResult(user, token);
+    }
+
+    @Transactional
+    public void extendDoctorToPatient(Long userId, Integer age, String gender, String bloodGroup) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (patientRepository.existsById(userId)) {
+            throw new IllegalArgumentException("User already has a patient profile");
+        }
+
+        Patient patient = Patient.builder()
+                .user(user)
+                .age(age)
+                .gender(gender)
+                .bloodGroup(bloodGroup)
+                .build();
+
+        patientRepository.save(patient);
+    }
+
+    /**
+     * Extends a Patient's account to also have a Doctor profile.
+     */
+    @Transactional
+    public void extendPatientToDoctor(Long userId, String specialization, String license, String hospital, String contact) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (doctorRepository.existsById(userId)) {
+            throw new IllegalArgumentException("User already has a doctor profile");
+        }
+
+        Doctor doctor = Doctor.builder()
+                .user(user)
+                .specialization(specialization)
+                .licenseNumber(license)
+                .hospitalName(hospital)
+                .contactInfo(contact)
+                .build();
+
+        doctorRepository.save(doctor);
     }
 
     public record AuthResult(User user, String token) {

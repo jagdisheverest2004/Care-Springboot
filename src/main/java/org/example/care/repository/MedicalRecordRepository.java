@@ -4,9 +4,10 @@ import java.util.List;
 import java.util.Optional;
 import org.example.care.model.MedicalRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 public interface MedicalRecordRepository extends JpaRepository<MedicalRecord, Long> {
-    List<MedicalRecord> findByPatientId(Long patientId);
 
+    @Query("SELECT m FROM MedicalRecord m WHERE m.patient.id = :patientId")
     Optional<MedicalRecord> findByIdAndPatientId(Long id, Long patientId);
 }

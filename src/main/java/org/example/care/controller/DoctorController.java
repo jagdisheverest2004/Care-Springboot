@@ -6,21 +6,22 @@ import java.util.stream.Collectors;
 
 import org.example.care.dto.*;
 import org.example.care.exception.ResourceNotFoundException;
-import org.example.care.model.MedicalRecord;
-import org.example.care.model.MedicalRecordType;
-import org.example.care.model.Patient;
-import org.example.care.model.Role;
+import org.example.care.model.*;
 import org.example.care.repository.MedicalRecordRepository;
+import org.example.care.repository.UserRepository;
 import org.example.care.security.CustomUserDetails;
 import org.example.care.service.AiOrchestrationService;
+import org.example.care.service.AuthService;
 import org.example.care.service.FileService;
 import org.example.care.service.PatientService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -31,32 +32,30 @@ import org.springframework.web.multipart.MultipartFile;
 @SuppressWarnings("null")
 public class DoctorController {
 
-    private final PatientService patientService;
-    private final MedicalRecordRepository medicalRecordRepository;
-    private final AiOrchestrationService aiOrchestrationService;
-    private final FileService fileService;
+    @Autowired
+    private PatientService patientService;
 
-    public DoctorController(PatientService patientService,
-                            MedicalRecordRepository medicalRecordRepository,
-                            AiOrchestrationService aiOrchestrationService,
-                            FileService fileService) {
-        this.patientService = patientService;
-        this.medicalRecordRepository = medicalRecordRepository;
-        this.aiOrchestrationService = aiOrchestrationService;
-        this.fileService = fileService;
-    }
+    @Autowired
+    private AuthService authService;
 
-    @PreAuthorize("hasRole('DOCTOR')")
-    @PostMapping("/doctor/patients")
-    public ResponseEntity<Patient> createPatient(@Validated @RequestBody CreatePatient createPatient) {
-        return ResponseEntity.ok(patientService.save(createPatient));
-    }
+    @Autowired
+    private MedicalRecordRepository medicalRecordRepository;
+
+    @Autowired
+    private AiOrchestrationService aiOrchestrationService;
+
+    @Autowired
+    private FileService fileService;
+
+    @Autowired
+    private UserRepository userRepository;
+
 
     @PreAuthorize("hasRole('DOCTOR')")
     @PatchMapping("/doctor/patients/{patientId}")
-    public ResponseEntity<Patient> updatePatient(@PathVariable Long patientId, @RequestBody UpdatePatient updatePatient) {
+    public ResponseEntity<String> updatePatient(@PathVariable Long patientId, @RequestBody UpdatePatient updatePatient) {
         Patient updatedPatient = patientService.updatePatient(patientId, updatePatient);
-        return ResponseEntity.ok(updatedPatient);
+        return ResponseEntity.ok("Patient " + updatedPatient.getUser().getUsername() + " updated successfully");
     }
 
     @PreAuthorize("hasAnyRole('DOCTOR','PATIENT')")
@@ -68,8 +67,9 @@ public class DoctorController {
 
     @PreAuthorize("hasRole('DOCTOR')")
     @GetMapping("/doctor/patients")
-    public ResponseEntity<List<Patient>> getPatients(@RequestParam(name = "q", required = false) String query) {
-        return ResponseEntity.ok(patientService.searchPatients(query));
+    public ResponseEntity<PatientsRetreival> getPatients(@RequestParam(name = "q", required = false) String query) {
+        PatientsRetreival patientsRetreival = patientService.searchPatientsByName(query);
+        return ResponseEntity.ok(patientsRetreival);
     }
 
 
@@ -77,15 +77,18 @@ public class DoctorController {
     @PostMapping(path = "/doctor/patients/{patientId}/records/xray", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, Object>> uploadXrayForAnalysis(@PathVariable Long patientId,
                                                                       @RequestParam("file") MultipartFile file) {
-        patientService.getPatientById(patientId);
+        Patient patient = patientService.getPatientById(patientId);
         CustomUserDetails user = currentUser();
+        User doctor = userRepository.findById(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
 
         Map<String, Object> aiSummary = aiOrchestrationService.analyzeXray(file);
 
         MedicalRecord record = MedicalRecord.builder()
-                .patientId(patientId)
-                .doctorId(user.getId())
+                .patient(patient)
+                .doctor(doctor.getDoctor())
                 .type(MedicalRecordType.IMAGE)
+                .fileName(file.getOriginalFilename())
                 .summary(aiSummary.toString())
                 .build();
         fileService.storeFile(record, file);
@@ -100,15 +103,19 @@ public class DoctorController {
     @PostMapping(path = "/doctor/patients/{patientId}/records/report", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, Object>> uploadReportForSummary(@PathVariable Long patientId,
                                                                        @RequestParam("file") MultipartFile file) {
-        patientService.getPatientById(patientId);
+        Patient patient = patientService.getPatientById(patientId);
         CustomUserDetails user = currentUser();
+        User doctor = userRepository.findById(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
+
 
         String narrative = aiOrchestrationService.summarizeReports(file);
 
         MedicalRecord record = MedicalRecord.builder()
-                .patientId(patientId)
-                .doctorId(user.getId())
+                .patient(patient)
+                .doctor(doctor.getDoctor())
                 .type(MedicalRecordType.REPORT)
+                .fileName(file.getOriginalFilename())
                 .summary(narrative)
                 .build();
         fileService.storeFile(record, file);
@@ -125,17 +132,6 @@ public class DoctorController {
         return ResponseEntity.ok(aiOrchestrationService.checkSafety(request));
     }
 
-    @PreAuthorize("hasAnyRole('DOCTOR', 'PATIENT')")
-    @GetMapping("/patients/{patientId}/records")
-    public ResponseEntity<List<MedicalRecordResponse>> getPatientRecords(@PathVariable Long patientId) {
-
-        List<MedicalRecordResponse> records = medicalRecordRepository.findByPatientId(patientId).stream()
-                .map(MedicalRecordResponse::from)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(records);
-    }
-
 
     @PreAuthorize("hasAnyRole('DOCTOR', 'PATIENT')")
     @GetMapping("/patients/{patientId}/records/{recordId}/file")
@@ -150,6 +146,45 @@ public class DoctorController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=record-" + recordId)
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(file);
+    }
+
+    @PreAuthorize("hasRole('DOCTOR')")
+    @PostMapping("/extend/to-patient")
+    public ResponseEntity<AuthResponse> extendToPatient(
+            @Validated
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestBody PatientRegistrationRequest request) {
+
+        authService.extendDoctorToPatient(
+                currentUser.getId(),
+                request.getAge(),
+                request.getGender(),
+                request.getBloodGroup()
+        );
+
+        return ResponseEntity.ok(AuthResponse.builder()
+                .message("Patient profile added to your account successfully")
+                .build());
+    }
+
+    @PreAuthorize("hasRole('PATIENT')")
+    @PostMapping("/extend/to-doctor")
+    public ResponseEntity<AuthResponse> extendToDoctor(
+            @Validated
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestBody DoctorRegistrationRequest request) {
+
+        authService.extendPatientToDoctor(
+                currentUser.getId(),
+                request.getSpecialization(),
+                request.getLicenseNumber(),
+                request.getHospitalName(),
+                request.getContactInfo()
+        );
+
+        return ResponseEntity.ok(AuthResponse.builder()
+                .message("Doctor profile added to your account successfully")
+                .build());
     }
 
     private void validatePatientAccess(Long patientId) {

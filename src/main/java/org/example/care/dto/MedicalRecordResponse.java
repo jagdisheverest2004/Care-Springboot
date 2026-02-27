@@ -17,8 +17,8 @@ public class MedicalRecordResponse {
     public static MedicalRecordResponse from(MedicalRecord record) {
         return MedicalRecordResponse.builder()
                 .id(record.getId())
-                .patientId(record.getPatientId())
-                .doctorId(record.getDoctorId())
+                .patientId(record.getPatient().getId())
+                .doctorId(record.getDoctor().getId())
                 .type(record.getType())
                 .summary(record.getSummary())
                 .build();

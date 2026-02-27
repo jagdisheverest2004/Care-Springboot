@@ -10,17 +10,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import org.example.care.model.User;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 @Service
 public class JwtService {
 
-    private final JwtProperties jwtProperties;
-
-    public JwtService(JwtProperties jwtProperties) {
-        this.jwtProperties = jwtProperties;
-    }
+    @Autowired
+    private JwtProperties jwtProperties;
 
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();

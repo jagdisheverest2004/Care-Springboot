@@ -3,13 +3,8 @@ package org.example.care.dto;
 import jakarta.persistence.Column;
 import lombok.Data;
 
-import java.util.List;
-
 @Data
-public class CreatePatient {
-
-    @Column(nullable = false)
-    private String name;
+public class PatientRegistrationRequest {
 
     @Column(nullable = false)
     private Integer age;
@@ -19,9 +14,4 @@ public class CreatePatient {
 
     @Column(nullable = false)
     private String bloodGroup;
-
-    @Column(length = 2000)
-    private String chronicConditions;
-
-    private List<String> newMeds;
 }
