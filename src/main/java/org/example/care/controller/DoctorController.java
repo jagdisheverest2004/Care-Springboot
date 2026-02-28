@@ -79,9 +79,11 @@ public class DoctorController {
     @PostMapping(path = "/patients/{patientId}/records/xray", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MedicalRecordResponse> uploadXrayForAnalysis(@PathVariable Long patientId,
                                                                        @RequestParam("patientDoctorId") Long patientDoctorId,
-                                                                       @RequestParam("file") MultipartFile file) {
+                                                                       @RequestParam("file") MultipartFile file,
+                                                                       @AuthenticationPrincipal CustomUserDetails currentUser
+    ) {
 
-        MedicalRecordResponse medicalRecordResponse = patientService.uploadXrayAndAnalyze(patientId, patientDoctorId, file, currentUser());
+        MedicalRecordResponse medicalRecordResponse = patientService.uploadXrayAndAnalyze(patientId, patientDoctorId, file, currentUser);
         return ResponseEntity.ok(medicalRecordResponse);
     }
 
@@ -89,9 +91,11 @@ public class DoctorController {
     @PostMapping(path = "/patients/{patientId}/records/report", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MedicalRecordResponse> uploadReportForSummary(@PathVariable Long patientId,
                                                                        @RequestParam("patientDoctorId") Long patientDoctorId,
-                                                                       @RequestParam("file") MultipartFile file) {
+                                                                       @RequestParam("file") MultipartFile file,
+                                                                        @AuthenticationPrincipal CustomUserDetails currentUser
+    ) {
 
-        MedicalRecordResponse medicalRecordResponse = patientService.uploadReportAndSummarize(patientId, patientDoctorId, file, currentUser());
+        MedicalRecordResponse medicalRecordResponse = patientService.uploadReportAndSummarize(patientId, patientDoctorId, file, currentUser);
         return ResponseEntity.ok(medicalRecordResponse);
     }
 

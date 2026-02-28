@@ -5,58 +5,69 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j; // IMPORT SLF4J
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
-import org.springframework.lang.NonNull;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import java.io.IOException;
+
 @Component
-@SuppressWarnings("null")
+@Slf4j // ADD THIS ANNOTATION
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JwtService jwtService;
+    private final JwtService jwtService;
+    private final CustomUserDetailsService userDetailsService;
+    private final JwtProperties jwtProperties;
 
-    @Autowired
-    private CustomUserDetailsService userDetailsService;
-
-    @Autowired
-    private JwtProperties jwtProperties;
+    public JwtAuthenticationFilter(JwtService jwtService, CustomUserDetailsService userDetailsService, JwtProperties jwtProperties) {
+        this.jwtService = jwtService;
+        this.userDetailsService = userDetailsService;
+        this.jwtProperties = jwtProperties;
+    }
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                    @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+        try {
+            String jwt = extractJwtFromCookie(request);
 
-        String token = extractTokenFromCookie(request.getCookies(), jwtProperties.getCookieName());
+            if (jwt != null) {
+                String username = jwtService.extractUsername(jwt);
+                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-        if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            String username = jwtService.extractUsername(token);
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-            if (jwtService.isTokenValid(token, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                    if (jwtService.isTokenValid(jwt, userDetails)) {
+                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                        log.debug("Successfully authenticated user: {}", username); // LOG SUCCESS
+                    } else {
+                        log.warn("Invalid JWT token presented for username: {}", username); // LOG INVALID TOKEN
+                    }
+                }
+            } else {
+                // Useful for tracking endpoints hit without a cookie
+                log.debug("No JWT cookie found for URI: {}", request.getRequestURI());
             }
+        } catch (Exception e) {
+            log.error("Authentication processing failed: {}", e.getMessage()); // LOG ERRORS (e.g. Expired tokens)
         }
 
         filterChain.doFilter(request, response);
     }
 
-    private String extractTokenFromCookie(Cookie[] cookies, String cookieName) {
-        if (cookies == null) {
-            return null;
-        }
-        for (Cookie cookie : cookies) {
-            if (cookieName.equals(cookie.getName())) {
-                return cookie.getValue();
+    private String extractJwtFromCookie(HttpServletRequest request) {
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if (jwtProperties.getCookieName().equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
             }
         }
         return null;

@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import lombok.extern.slf4j.Slf4j;
 import jakarta.validation.constraints.NotEmpty;
-import org.example.care.model.Patient;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.example.care.exception.GlobalExceptionHandler;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
@@ -17,6 +17,7 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
+@Slf4j
 @SuppressWarnings("null")
 public class AiOrchestrationService {
 
@@ -28,42 +29,74 @@ public class AiOrchestrationService {
 
     public Map<String, Object> analyzeXray(MultipartFile file) {
         // For X-rays, Flask expects the key "file"
-        MultipartBodyBuilder bodyBuilder = multipartBody(file, "file");
-        return aiWebClient.post()
-                .uri("/analyze_xray")
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                .block();
+        log.info("Initiating request to Flask AI engine for X-ray analysis. File: {}", file.getOriginalFilename());
+        try{
+            MultipartBodyBuilder bodyBuilder = multipartBody(file, "file");
+            Map<String,Object> response = aiWebClient.post()
+                    .uri("/analyze_xray")
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .block();
+            log.info("Successfully received X-ray analysis response from Flask API.");
+            return response;
+        }
+        catch (Exception e) {
+            log.error("Error during X-ray analysis request: {}", e.getMessage());
+            throw new RuntimeException("Failed to analyze X-ray: " + e.getMessage());
+        }
+
     }
 
     public String summarizeReports(MultipartFile file) {
         // CRITICAL FIX: Flask expects the key "report" for this endpoint
-        MultipartBodyBuilder bodyBuilder = multipartBody(file, "report");
-        return aiWebClient.post()
-                .uri("/summarize_reports")
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
+        log.info("Initiating request to Flask AI engine for report summarization. File: {}", file.getOriginalFilename());
+        try{
+            MultipartBodyBuilder bodyBuilder = multipartBody(file, "report");
+            String response = aiWebClient.post()
+                    .uri("/summarize_reports")
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+
+            log.info("Successfully received summarization response from Flask API.");
+            return response;
+        }
+        catch (Exception e) {
+            log.error("Error during report summarization request: {}", e.getMessage());
+            throw new RuntimeException("Failed to summarize report: " + e.getMessage());
+        }
     }
 
     public Map<String, Object> checkSafety(Long id, List<String> currentDrugNames, @NotEmpty List<String> newDrugs) {
-        Map<String, Object> requestBody = Map.of(
-                "patient_id", id,
-                "current_meds", currentDrugNames,
-                "new_drugs", newDrugs
-        );
 
-        return aiWebClient.post()
-                .uri("/check_safety")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(Objects.requireNonNull(requestBody))
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                .block();
+        log.info("Initiating request to Flask AI engine for drug safety check. Patient ID: {}, Current Meds: {}, New Drugs: {}",
+                id, currentDrugNames, newDrugs);
+        try{
+            Map<String, Object> requestBody = Map.of(
+                    "patient_id", id,
+                    "current_meds", currentDrugNames,
+                    "new_drugs", newDrugs
+            );
+
+            Map<String,Object> response = aiWebClient.post()
+                    .uri("/check_safety")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(Objects.requireNonNull(requestBody))
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .block();
+
+            log.info("Successfully received drug safety check response from Flask API.");
+            return response;
+        }
+        catch (Exception e) {
+            log.error("Error during drug safety check request: {}", e.getMessage());
+            throw new RuntimeException("Failed to check drug safety: " + e.getMessage());
+        }
     }
 
     /**

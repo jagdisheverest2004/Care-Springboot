@@ -1,5 +1,6 @@
 package org.example.care.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import java.time.Duration;
 import java.util.Objects;
 import org.example.care.dto.auth.AuthResponse;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
+@Slf4j
 @SuppressWarnings("null")
 public class AuthController {
 
@@ -42,7 +44,9 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Validated @RequestBody LoginRequest request) {
+        log.info("Login request received for username: {}", request.getUsername());
         AuthService.AuthResult authResult = authService.login(request);
+        log.info("User {} successfully logged in. Role: {}", authResult.user().getUsername(), authResult.user().getRole());
 
         ResponseCookie jwtCookie = ResponseCookie.from(
                 Objects.requireNonNull(jwtProperties.getCookieName()),
@@ -68,6 +72,7 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<AuthResponse> logout() {
         // Create a cookie with the same name, but maxAge = 0 to delete it
+        log.info("Processing logout request");
         ResponseCookie deleteCookie = ResponseCookie.from(
                         Objects.requireNonNull(jwtProperties.getCookieName()),
                         "")
