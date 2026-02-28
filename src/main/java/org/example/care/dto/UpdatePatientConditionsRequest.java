@@ -5,8 +5,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class UpdatePatient {
-
+public class UpdatePatientConditionsRequest {
     private String chronicConditions;
-    private List<String> newMeds;
+    private CreatePatientDoctorRequest doctorVisit;
 }

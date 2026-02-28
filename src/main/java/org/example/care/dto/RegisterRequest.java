@@ -22,6 +22,9 @@ public class RegisterRequest {
 
     private Role role = Role.PATIENT;
 
+    @NotBlank
+    private String name;
+
     // Patient
     private Integer age;
     private String gender;

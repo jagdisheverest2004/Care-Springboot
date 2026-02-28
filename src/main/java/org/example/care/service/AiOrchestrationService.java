@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.example.care.dto.SafetyCheckRequest;
+
+import jakarta.validation.constraints.NotEmpty;
 import org.example.care.model.Patient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
@@ -52,13 +53,11 @@ public class AiOrchestrationService {
                 .block();
     }
 
-    public Map<String, Object> checkSafety(SafetyCheckRequest request) {
-        Patient patient = patientService.getPatientById(request.getPatientId());
-        List<String> currentDrugs = patient.getCurrentMeds();
+    public Map<String, Object> checkSafety(Long id, List<String> currentDrugNames, @NotEmpty List<String> newDrugs) {
         Map<String, Object> requestBody = Map.of(
-                "patient_id", patient.getId(),
-                "current_meds", currentDrugs,
-                "new_drugs", request.getNewDrugs()
+                "patient_id", id,
+                "current_meds", currentDrugNames,
+                "new_drugs", newDrugs
         );
 
         return aiWebClient.post()

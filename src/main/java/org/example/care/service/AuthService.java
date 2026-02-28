@@ -13,7 +13,6 @@ import org.example.care.repository.UserRepository;
 import org.example.care.security.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,20 +30,17 @@ public class AuthService {
     private PatientRepository patientRepository;
 
     @Autowired
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
+    private UserRepository userRepository;
 
-    public AuthService(UserRepository userRepository,
-                       PasswordEncoder passwordEncoder,
-                       AuthenticationManager authenticationManager,
-                       JwtService jwtService) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
-        this.jwtService = jwtService;
-    }
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private JwtService jwtService;
+
 
     @Transactional
     public User register(RegisterRequest request) {
@@ -60,6 +56,7 @@ public class AuthService {
         if (request.getRole() == Role.DOCTOR) {
             Doctor doctor = Doctor.builder()
                     .user(savedUser)
+                    .name(request.getName())
                     .specialization(request.getSpecialization())
                     .licenseNumber(request.getLicenseNumber())
                     .hospitalName(request.getHospitalName())
@@ -69,6 +66,7 @@ public class AuthService {
         } else {
             Patient patient = Patient.builder()
                     .user(savedUser)
+                    .name(request.getName())
                     .age(request.getAge())
                     .gender(request.getGender())
                     .bloodGroup(request.getBloodGroup())

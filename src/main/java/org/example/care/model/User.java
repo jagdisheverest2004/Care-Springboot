@@ -3,6 +3,8 @@ package org.example.care.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "app_users")
 @Getter
@@ -34,4 +36,6 @@ public class User {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Doctor doctor;
+
+    private LocalDateTime createdAt;
 }

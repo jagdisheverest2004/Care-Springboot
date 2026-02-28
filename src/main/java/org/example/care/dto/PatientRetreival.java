@@ -12,6 +12,5 @@ public class PatientRetreival {
     private String gender;
     private String bloodGroup;
     private String chronicConditions;
-    private List<String> currentMeds;
-    private List<MedicalRecordRetreival> medicalRecords;
+    private List<PatientDoctorRetreival> doctorVisits;
 }

@@ -2,6 +2,7 @@ package org.example.care.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "medical_records")
@@ -18,11 +19,16 @@ public class MedicalRecord {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "patient_id", nullable = false)
-    private Patient patient; // Mapped to object, not just ID
+    private Patient patient;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "doctor_id", nullable = false)
-    private Doctor doctor; // Mapped to object, not just ID
+    private Doctor doctor;
+
+    // NEW: Link to the specific visit/consultation
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "visit_id") // Maps to the PatientDoctor bridge table
+    private PatientDoctor patientDoctor;
 
     @Column(nullable = false)
     private String fileName;
@@ -37,4 +43,11 @@ public class MedicalRecord {
     @Basic(fetch = FetchType.LAZY)
     @Column(name = "file_data", nullable = false, columnDefinition = "bytea")
     private byte[] fileData;
+
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
 }
