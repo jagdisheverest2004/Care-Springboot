@@ -1,4 +1,4 @@
-package org.example.care.dto;
+package org.example.care.dto.drug;
 
 import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotEmpty;

@@ -1,4 +1,4 @@
-package org.example.care.dto;
+package org.example.care.dto.drug;
 
 import lombok.Data;
 import org.example.care.model.DrugTime;

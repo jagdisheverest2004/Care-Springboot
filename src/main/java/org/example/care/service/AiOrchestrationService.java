@@ -22,9 +22,6 @@ public class AiOrchestrationService {
 
     private final WebClient aiWebClient;
 
-    @Autowired
-    private PatientService patientService;
-
     public AiOrchestrationService(WebClient aiWebClient) {
         this.aiWebClient = aiWebClient;
     }

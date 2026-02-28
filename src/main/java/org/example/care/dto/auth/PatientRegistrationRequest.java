@@ -1,4 +1,4 @@
-package org.example.care.dto;
+package org.example.care.dto.auth;
 
 import jakarta.persistence.Column;
 import lombok.Data;

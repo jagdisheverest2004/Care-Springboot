@@ -6,7 +6,11 @@ import java.time.chrono.ChronoLocalDate;
 import java.util.List;
 import java.util.Map;
 
-import org.example.care.dto.*;
+import org.example.care.dto.drug.PatientDrugRetreival;
+import org.example.care.dto.drug.SafetyCheckRequest;
+import org.example.care.dto.medicalrecord.MedicalRecordResponse;
+import org.example.care.dto.medicalrecord.MedicalRecordRetreival;
+import org.example.care.dto.patient.*;
 import org.example.care.exception.ResourceNotFoundException;
 import org.example.care.model.*;
 import org.example.care.repository.PatientDoctorRepository;
@@ -16,6 +20,7 @@ import org.example.care.repository.UserRepository;
 import org.example.care.security.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -24,12 +29,6 @@ public class PatientService {
 
     @Autowired
     private PatientRepository patientRepository;
-
-    @Autowired
-    private PatientDrugRepository patientDrugRepository;
-
-    @Autowired
-    private PatientDoctorRepository patientDoctorRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -41,13 +40,10 @@ public class PatientService {
     private AiOrchestrationService aiOrchestrationService;
 
     @Autowired
-    private CustomUserDetails currentUser;
-
-    @Autowired
     private DoctorService doctorService;
 
     @Autowired
-    private DrugService drugService;
+    private PatientDoctorService patientDoctorService;
 
 
     public Patient getPatientById(Long patientId) {
@@ -56,6 +52,7 @@ public class PatientService {
     }
 
 
+    @Transactional
     public Patient updatePatient(Long patientId, UpdatePatientConditionsRequest updatePatient, CustomUserDetails customUserDetails) {
         Patient existingPatient = getPatientById(patientId);
         Doctor doctor = doctorService.getDoctorByUserId(customUserDetails.getId());
@@ -67,37 +64,12 @@ public class PatientService {
         CreatePatientDoctorRequest doctorVisit = updatePatient.getDoctorVisit();
 
         if(doctorVisit != null) {
-            PatientDoctor patientDoctor = new PatientDoctor();
-            patientDoctor.setPatient(existingPatient);
-            patientDoctor.setDoctor(doctor);
-            patientDoctor.setPurpose(doctorVisit.getPurpose());
-            patientDoctor.setNotes(doctorVisit.getNotes());
-            patientDoctor.setVisitedAt(LocalDateTime.now());
-            patientDoctorRepository.save(patientDoctor);
-            if(doctorVisit.getNewDrugs() != null) {
-                List<PatientDrug> patientDrugs = doctorVisit.getNewDrugs().stream().map(drug -> {
-                    PatientDrug patientDrug = new PatientDrug();
-                    patientDrug.setPatient(existingPatient);
-                    patientDrug.setDrug(drugService.getDrugById(drug.getDrugId()));
-                    patientDrug.setDosage(drug.getDosage());
-                    patientDrug.setInstructions(drug.getInstructions());
-                    patientDrug.setPrescribedBy(doctor);
-                    patientDrug.setStartDate(drug.getStartDate());
-                    patientDrug.setEndDate(drug.getEndDate());
-                    patientDrug.setDrugTimes(drug.getDrugTimes());
-                    patientDrug.setVisit(patientDoctor);
-                    patientDrugRepository.save(patientDrug);
-                    return patientDrug;
-                }).toList();
-                patientDoctor.setPrescriptions(patientDrugs);
-                existingPatient.setPrescriptions(patientDrugs);
-            }
-            patientDoctorRepository.save(patientDoctor);
-            existingPatient.getDoctorVisits().add(patientDoctor);
+            patientDoctorService.createVisitation(existingPatient, doctor, doctorVisit);
         }
 
         return patientRepository.save(existingPatient);
     }
+
 
     public PatientRetreival getPatientFullDetails(Long patientId) {
         Patient patient = getPatientById(patientId);
@@ -108,45 +80,8 @@ public class PatientService {
         patientRetreival.setGender(patient.getGender());
         patientRetreival.setBloodGroup(patient.getBloodGroup());
         patientRetreival.setChronicConditions(patient.getChronicConditions());
-        List<PatientDoctorRetreival> doctorVisits = patient.getDoctorVisits().stream().map(visit -> {
-            Doctor treatedDoctor = visit.getDoctor();
-            PatientDoctorRetreival visitRetreival = new PatientDoctorRetreival();
-            visitRetreival.setId(visit.getId());
-            visitRetreival.setPrescribedDoctorId(treatedDoctor.getId());
-            visitRetreival.setPrescribedDoctorName(treatedDoctor.getName());
-            visitRetreival.setPurpose(visit.getPurpose());
-            visitRetreival.setNotes(visit.getNotes());
-            visitRetreival.setVisitedAt(visit.getVisitedAt());
 
-            List<PatientDrugRetreival> drugRetreivals = visit.getPrescriptions().stream().map(patientDrug -> {
-                PatientDrugRetreival drugRetreival = new PatientDrugRetreival();
-                drugRetreival.setId(patientDrug.getId());
-                drugRetreival.setDrugId(patientDrug.getDrug().getId());
-                drugRetreival.setDrugName(patientDrug.getDrug().getDrugName());
-                drugRetreival.setDosage(patientDrug.getDosage());
-                drugRetreival.setInstructions(patientDrug.getInstructions());
-                drugRetreival.setStartDate(patientDrug.getStartDate());
-                drugRetreival.setEndDate(patientDrug.getEndDate());
-                drugRetreival.setDrugTimes(patientDrug.getDrugTimes());
-                return drugRetreival;
-            }).toList();
-
-            List<MedicalRecordRetreival> recordRetreivals = visit.getVisitRecords().stream().map(record -> {
-                MedicalRecordRetreival recordRetreival = new MedicalRecordRetreival();
-                recordRetreival.setRecordId(record.getId());
-                recordRetreival.setFileName(record.getFileName());
-                recordRetreival.setFileType(record.getType().name());
-                recordRetreival.setFileSummary(record.getSummary());
-                recordRetreival.setUploadedAt(record.getCreatedAt());
-                return recordRetreival;
-            }).toList();
-
-            visitRetreival.setDrugsPrescribed(drugRetreivals);
-            visitRetreival.setMedicalRecords(recordRetreivals);
-
-            return visitRetreival;
-        }).toList();
-
+        List<PatientDoctorRetreival> doctorVisits = patientDoctorService.getPatientDoctorDetails(patient.getDoctorVisits());
         patientRetreival.setDoctorVisits(doctorVisits);
 
         return patientRetreival;
@@ -167,9 +102,9 @@ public class PatientService {
         return patientsRetreival;
     }
 
-    public MedicalRecordResponse uploadXrayAndAnalyze(Long patientId, Long patientDoctorId, MultipartFile file) {
+    public MedicalRecordResponse uploadXrayAndAnalyze(Long patientId, Long patientDoctorId, MultipartFile file, CustomUserDetails customUserDetails) {
         Patient patient = this.getPatientById(patientId);
-        User doctor = userRepository.findById(currentUser.getId())
+        User doctor = userRepository.findById(customUserDetails.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
 
         Map<String, Object> aiSummary = aiOrchestrationService.analyzeXray(file);
@@ -177,9 +112,9 @@ public class PatientService {
         return medicalRecordService.uploadMedicalRecord(patient,doctor.getDoctor(),MedicalRecordType.IMAGE, patientDoctorId, file, aiSummary);
     }
 
-    public MedicalRecordResponse uploadReportAndSummarize(Long patientId, Long patientDoctorId, MultipartFile file) {
+    public MedicalRecordResponse uploadReportAndSummarize(Long patientId, Long patientDoctorId, MultipartFile file, CustomUserDetails customUserDetails) {
         Patient patient = this.getPatientById(patientId);
-        User doctor = userRepository.findById(currentUser.getId())
+        User doctor = userRepository.findById(customUserDetails.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
 
         String narrative = aiOrchestrationService.summarizeReports(file);

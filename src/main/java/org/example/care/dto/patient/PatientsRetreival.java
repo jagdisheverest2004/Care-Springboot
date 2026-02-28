@@ -1,4 +1,4 @@
-package org.example.care.dto;
+package org.example.care.dto.patient;
 
 import lombok.Data;
 

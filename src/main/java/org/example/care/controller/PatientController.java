@@ -1,7 +1,7 @@
 package org.example.care.controller;
 
-import org.example.care.dto.AuthResponse;
-import org.example.care.dto.DoctorRegistrationRequest;
+import org.example.care.dto.auth.AuthResponse;
+import org.example.care.dto.auth.DoctorRegistrationRequest;
 import org.example.care.security.CustomUserDetails;
 import org.example.care.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;

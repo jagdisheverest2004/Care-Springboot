@@ -1,6 +1,6 @@
 package org.example.care.service;
 
-import org.example.care.dto.AddDrugRequest;
+import org.example.care.dto.drug.AddDrugRequest;
 import org.example.care.model.Drug;
 import org.example.care.repository.DrugRepository;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,4 +1,4 @@
-package org.example.care.dto;
+package org.example.care.dto.medicalrecord;
 
 import org.example.care.model.MedicalRecord;
 import org.example.care.model.MedicalRecordType;

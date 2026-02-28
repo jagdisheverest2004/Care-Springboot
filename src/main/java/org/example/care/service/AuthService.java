@@ -1,7 +1,7 @@
 package org.example.care.service;
 
-import org.example.care.dto.LoginRequest;
-import org.example.care.dto.RegisterRequest;
+import org.example.care.dto.auth.LoginRequest;
+import org.example.care.dto.auth.RegisterRequest;
 import org.example.care.exception.ResourceNotFoundException;
 import org.example.care.model.Doctor;
 import org.example.care.model.Patient;

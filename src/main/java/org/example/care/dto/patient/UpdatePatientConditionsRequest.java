@@ -1,8 +1,6 @@
-package org.example.care.dto;
+package org.example.care.dto.patient;
 
 import lombok.Data;
-
-import java.util.List;
 
 @Data
 public class UpdatePatientConditionsRequest {

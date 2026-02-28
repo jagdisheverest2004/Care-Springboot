@@ -2,8 +2,13 @@ package org.example.care.controller;
 
 import java.util.Map;
 
-import org.example.care.dto.*;
-import org.example.care.exception.ResourceNotFoundException;
+import org.example.care.dto.auth.AuthResponse;
+import org.example.care.dto.auth.PatientRegistrationRequest;
+import org.example.care.dto.drug.SafetyCheckRequest;
+import org.example.care.dto.medicalrecord.MedicalRecordResponse;
+import org.example.care.dto.patient.PatientRetreival;
+import org.example.care.dto.patient.PatientsRetreival;
+import org.example.care.dto.patient.UpdatePatientConditionsRequest;
 import org.example.care.model.*;
 import org.example.care.repository.MedicalRecordRepository;
 import org.example.care.repository.UserRepository;
@@ -13,8 +18,6 @@ import org.example.care.service.AuthService;
 import org.example.care.service.FileService;
 import org.example.care.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +32,6 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/doctor")
 @SuppressWarnings("null")
-@Configuration
 public class DoctorController {
 
     @Autowired
@@ -76,10 +78,10 @@ public class DoctorController {
     @PreAuthorize("hasRole('DOCTOR')")
     @PostMapping(path = "/patients/{patientId}/records/xray", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MedicalRecordResponse> uploadXrayForAnalysis(@PathVariable Long patientId,
-                                                                      @RequestParam("patientDoctorId") Long patientDoctorId,
-                                                                      @RequestParam("file") MultipartFile file) {
+                                                                       @RequestParam("patientDoctorId") Long patientDoctorId,
+                                                                       @RequestParam("file") MultipartFile file) {
 
-        MedicalRecordResponse medicalRecordResponse = patientService.uploadXrayAndAnalyze(patientId, patientDoctorId, file);
+        MedicalRecordResponse medicalRecordResponse = patientService.uploadXrayAndAnalyze(patientId, patientDoctorId, file, currentUser());
         return ResponseEntity.ok(medicalRecordResponse);
     }
 
@@ -89,7 +91,7 @@ public class DoctorController {
                                                                        @RequestParam("patientDoctorId") Long patientDoctorId,
                                                                        @RequestParam("file") MultipartFile file) {
 
-        MedicalRecordResponse medicalRecordResponse = patientService.uploadReportAndSummarize(patientId, patientDoctorId, file);
+        MedicalRecordResponse medicalRecordResponse = patientService.uploadReportAndSummarize(patientId, patientDoctorId, file, currentUser());
         return ResponseEntity.ok(medicalRecordResponse);
     }
 
@@ -139,7 +141,6 @@ public class DoctorController {
     }
 
 
-    @Bean
     protected CustomUserDetails currentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return (CustomUserDetails) authentication.getPrincipal();

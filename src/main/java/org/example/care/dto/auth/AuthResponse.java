@@ -1,4 +1,4 @@
-package org.example.care.dto;
+package org.example.care.dto.auth;
 
 import org.example.care.model.Role;
 import lombok.AllArgsConstructor;

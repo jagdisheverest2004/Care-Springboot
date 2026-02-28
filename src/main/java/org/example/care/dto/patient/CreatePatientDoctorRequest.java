@@ -1,6 +1,7 @@
-package org.example.care.dto;
+package org.example.care.dto.patient;
 
 import lombok.Data;
+import org.example.care.dto.drug.AddPatientDrugRequest;
 
 import java.util.List;
 
