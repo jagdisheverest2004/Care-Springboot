@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.example.care.dto.auth.AuthResponse;
 import org.example.care.dto.drug.SafetyCheckRequest;
 import org.example.care.dto.medicalrecord.MedicalRecordResponse;
 import org.example.care.dto.patient.*;
@@ -55,7 +56,7 @@ public class PatientService {
 
 
     @Transactional
-    public Patient updatePatient(Long patientId, UpdatePatientConditionsRequest updatePatient, CustomUserDetails customUserDetails) {
+    public Patient updatePatient(Long patientId,Long patientDoctorId, UpdatePatientConditionsRequest updatePatient, CustomUserDetails customUserDetails) {
         Patient existingPatient = getPatientById(patientId);
         Doctor doctor = doctorService.getDoctorByUserId(customUserDetails.getId());
 
@@ -66,7 +67,13 @@ public class PatientService {
         CreatePatientDoctorRequest doctorVisit = updatePatient.getDoctorVisit();
 
         if(doctorVisit != null) {
-            patientDoctorService.createVisitation(existingPatient, doctor, doctorVisit);
+
+            if(patientDoctorId != null) {
+                patientDoctorService.createVisitation(existingPatient, patientDoctorId, doctor, doctorVisit);
+            }
+            else{
+                patientDoctorService.createVisitation(existingPatient, null,doctor, doctorVisit);
+            }
         }
 
         return patientRepository.save(existingPatient);
@@ -80,6 +87,9 @@ public class PatientService {
         patientRetreival.setName(patient.getUser().getPatient().getName());
         patientRetreival.setAge(patient.getAge());
         patientRetreival.setGender(patient.getGender());
+        patientRetreival.setDateOfBirth(patient.getDateOfBirth());
+        patientRetreival.setAddress(patient.getAddress());
+        patientRetreival.setContactNumber(patient.getContactNumber());
         patientRetreival.setBloodGroup(patient.getBloodGroup());
         patientRetreival.setChronicConditions(patient.getChronicConditions());
 
@@ -122,7 +132,7 @@ public class PatientService {
         User doctor = userRepository.findById(customUserDetails.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
 
-        Map<String, Object> aiSummary = aiOrchestrationService.analyzeXray(file);
+        String aiSummary = aiOrchestrationService.analyzeXray(file);
 
         return medicalRecordService.uploadMedicalRecord(patient,doctor.getDoctor(), MedicalRecordType.IMAGE, patientDoctorId, file, aiSummary);
     }
@@ -133,7 +143,7 @@ public class PatientService {
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
 
         String narrative = aiOrchestrationService.summarizeReports(file);
-        return medicalRecordService.uploadMedicalRecord(patient, doctor.getDoctor(),MedicalRecordType.REPORT, patientDoctorId, file, Map.of("summary", narrative));
+        return medicalRecordService.uploadMedicalRecord(patient, doctor.getDoctor(),MedicalRecordType.REPORT, patientDoctorId, file, narrative);
     }
 
     public Map<String, Object> checkDrugSafety(SafetyCheckRequest request) {
@@ -153,5 +163,26 @@ public class PatientService {
             throw new ResourceNotFoundException("Medical record not found for patient with id: " + patientId);
         }
         return record;
+    }
+
+    public AuthResponse updatePatientProfile(Long id, UpdatePatientProfile request) {
+        Patient patient = this.getPatientById(id);
+
+        if (request.getName() != null) {
+            patient.setName(request.getName());
+        }
+        if (request.getPhoneNumber() != null) {
+            patient.setContactNumber(request.getPhoneNumber());
+        }
+        if (request.getAddress() != null) {
+            patient.setAddress(request.getAddress());
+        }
+
+        patientRepository.save(patient);
+
+        return AuthResponse.builder().message("Patient profile updated successfully")
+                .role(patient.getUser().getRole())
+                .username(patient.getUser().getUsername())
+                .build();
     }
 }

@@ -1,6 +1,7 @@
 package org.example.care.service;
 
 import org.example.care.dto.auth.LoginRequest;
+import org.example.care.dto.auth.PatientRegistrationRequest;
 import org.example.care.dto.auth.RegisterRequest;
 import org.example.care.exception.ResourceNotFoundException;
 import org.example.care.model.Doctor;
@@ -68,6 +69,9 @@ public class AuthService {
                     .user(savedUser)
                     .name(request.getName())
                     .age(request.getAge())
+                    .dateOfBirth(request.getDateOfBirth())
+                    .address(request.getAddress())
+                    .contactNumber(request.getContactNumber())
                     .gender(request.getGender())
                     .bloodGroup(request.getBloodGroup())
                     .build();
@@ -91,7 +95,7 @@ public class AuthService {
     }
 
     @Transactional
-    public void extendDoctorToPatient(Long userId, Integer age, String gender, String bloodGroup) {
+    public void extendDoctorToPatient(Long userId, PatientRegistrationRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -101,9 +105,13 @@ public class AuthService {
 
         Patient patient = Patient.builder()
                 .user(user)
-                .age(age)
-                .gender(gender)
-                .bloodGroup(bloodGroup)
+                .name(user.getDoctor().getName())
+                .age(request.getAge())
+                .gender(request.getGender())
+                .dateOfBirth(request.getDateOfBirth())
+                .bloodGroup(request.getBloodGroup())
+                .address(request.getAddress())
+                .contactNumber(request.getContactNumber())
                 .build();
 
         patientRepository.save(patient);
@@ -123,6 +131,7 @@ public class AuthService {
 
         Doctor doctor = Doctor.builder()
                 .user(user)
+                .name(user.getPatient().getName())
                 .specialization(specialization)
                 .licenseNumber(license)
                 .hospitalName(hospital)

@@ -1,14 +1,12 @@
 package org.example.care.controller;
 
 import org.example.care.dto.drug.AddDrugRequest;
+import org.example.care.dto.drug.DrugsRetreival;
 import org.example.care.service.DrugService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/drugs")
@@ -25,7 +23,10 @@ public class DrugController {
         return ResponseEntity.ok(response);
     }
 
-
-
-
+    @PreAuthorize("hasRole('DOCTOR')")
+    @GetMapping("/get-drugs")
+    public ResponseEntity<DrugsRetreival> getDrugs() {
+        DrugsRetreival drugsRetreival = drugService.getAllDrugs();
+        return ResponseEntity.ok(drugsRetreival);
+    }
 }

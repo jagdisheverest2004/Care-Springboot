@@ -35,7 +35,7 @@ public class MedicalRecordService {
 
 
     @Transactional
-    public MedicalRecordResponse uploadMedicalRecord(Patient patient, Doctor doctor, MedicalRecordType medicalRecordType, Long patientDoctorId, MultipartFile file, Map<String, Object> aiSummary) {
+    public MedicalRecordResponse uploadMedicalRecord(Patient patient, Doctor doctor, MedicalRecordType medicalRecordType, Long patientDoctorId, MultipartFile file, String aiSummary) {
 
         PatientDoctor patientDoctor = patientDoctorRepository.findById(patientDoctorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Visit not found with id: " + patientDoctorId));
@@ -45,7 +45,7 @@ public class MedicalRecordService {
                 .doctor(doctor)
                 .type(medicalRecordType)
                 .fileName(file.getOriginalFilename())
-                .summary(aiSummary.toString())
+                .summary(aiSummary)
                 .patientDoctor(patientDoctor)
                 .build();
 

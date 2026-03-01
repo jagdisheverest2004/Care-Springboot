@@ -27,7 +27,7 @@ public class AiOrchestrationService {
         this.aiWebClient = aiWebClient;
     }
 
-    public Map<String, Object> analyzeXray(MultipartFile file) {
+    public String analyzeXray(MultipartFile file) {
         // For X-rays, Flask expects the key "file"
         log.info("Initiating request to Flask AI engine for X-ray analysis. File: {}", file.getOriginalFilename());
         try{
@@ -42,7 +42,14 @@ public class AiOrchestrationService {
             log.info("Successfully received X-ray analysis response from Flask API.");
 
             if (responseList != null && !responseList.isEmpty()) {
-                return responseList.get(0);
+                Map<String, Object> firstResult = responseList.get(0);
+
+                // Extract ONLY the generated_report value
+                if (firstResult.containsKey("generated_report")) {
+                    String rawReport = (String) firstResult.get("generated_report");
+                    // Clean and return the string using the method we created earlier
+                    return cleanSummaryText(rawReport);
+                }
             }
             throw new RuntimeException("Flask API returned an empty analysis result");
         }
@@ -57,20 +64,21 @@ public class AiOrchestrationService {
         log.info("Initiating request to Flask AI engine for report summarization. File: {}", file.getOriginalFilename());
         try{
             MultipartBodyBuilder bodyBuilder = multipartBody(file, "report");
-            Map<String,Object> response = aiWebClient.post()
+            List<Map<String,Object>> responseList = aiWebClient.post()
                     .uri("/summarize_reports")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
                     .block();
 
             log.info("Successfully received summarization response from Flask API.");
 
-            if (response != null && response.containsKey("summary")) {
-                List<Map<String, Object>> summaryList = (List<Map<String, Object>>) response.get("summary");
-                if (summaryList != null && !summaryList.isEmpty()) {
-                    String rawSummary = (String) summaryList.get(0).get("summary");
+            if (responseList != null && !responseList.isEmpty()) {
+                Map<String, Object> firstResult = responseList.get(0);
+
+                if (firstResult.containsKey("summary")) {
+                    String rawSummary = (String) firstResult.get("summary");
                     // Clean and return the string
                     return cleanSummaryText(rawSummary);
                 }

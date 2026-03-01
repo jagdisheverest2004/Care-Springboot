@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.example.care.dto.auth.AuthResponse;
 import org.example.care.dto.auth.PatientRegistrationRequest;
+import org.example.care.dto.doctor.UpdateDoctorProfile;
 import org.example.care.dto.drug.SafetyCheckRequest;
 import org.example.care.dto.medicalrecord.MedicalRecordResponse;
 import org.example.care.dto.patient.PatientRetreival;
@@ -11,11 +12,9 @@ import org.example.care.dto.patient.PatientsRetreival;
 import org.example.care.dto.patient.UpdatePatientConditionsRequest;
 import org.example.care.model.*;
 import org.example.care.model.enumeration.RiskLevel;
-import org.example.care.repository.MedicalRecordRepository;
-import org.example.care.repository.UserRepository;
 import org.example.care.security.CustomUserDetails;
-import org.example.care.service.AiOrchestrationService;
 import org.example.care.service.AuthService;
+import org.example.care.service.DoctorService;
 import org.example.care.service.FileService;
 import org.example.care.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,22 +41,15 @@ public class DoctorController {
     private AuthService authService;
 
     @Autowired
-    private MedicalRecordRepository medicalRecordRepository;
-
-    @Autowired
-    private AiOrchestrationService aiOrchestrationService;
-
-    @Autowired
     private FileService fileService;
 
     @Autowired
-    private UserRepository userRepository;
-
+    private DoctorService doctorService;
 
     @PreAuthorize("hasRole('DOCTOR')")
     @PatchMapping("/patients/{patientId}")
-    public ResponseEntity<String> updatePatient(@PathVariable Long patientId, @RequestBody UpdatePatientConditionsRequest updatePatient) {
-        Patient updatedPatient = patientService.updatePatient(patientId, updatePatient,currentUser());
+    public ResponseEntity<String> updatePatient(@PathVariable Long patientId,@RequestParam(name="visitedId",required = false) Long patientDoctorId,@RequestBody UpdatePatientConditionsRequest updatePatient) {
+        Patient updatedPatient = patientService.updatePatient(patientId,patientDoctorId, updatePatient,currentUser());
         return ResponseEntity.ok("Patient " + updatedPatient.getUser().getUsername() + " updated successfully");
     }
 
@@ -137,14 +129,22 @@ public class DoctorController {
 
         authService.extendDoctorToPatient(
                 currentUser.getId(),
-                request.getAge(),
-                request.getGender(),
-                request.getBloodGroup()
+                request
         );
 
         return ResponseEntity.ok(AuthResponse.builder()
                 .message("Patient profile added to your account successfully")
                 .build());
+    }
+
+    @PreAuthorize("hasRole('DOCTOR')")
+    @PatchMapping("/update-profile")
+    public ResponseEntity<AuthResponse> updateProfile(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestBody UpdateDoctorProfile request) {
+
+        AuthResponse response = doctorService.updateDoctorProfile(currentUser.getId(), request);
+        return ResponseEntity.ok(response);
     }
 
 

@@ -6,6 +6,8 @@ import org.example.care.model.enumeration.Role;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 public class RegisterRequest {
@@ -26,6 +28,9 @@ public class RegisterRequest {
     private String name;
 
     // Patient
+    private String contactNumber;
+    private LocalDate dateOfBirth;
+    private String address;
     private Integer age;
     private String gender;
     private String bloodGroup;
