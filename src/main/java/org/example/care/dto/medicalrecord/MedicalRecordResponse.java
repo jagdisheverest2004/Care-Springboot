@@ -1,7 +1,7 @@
 package org.example.care.dto.medicalrecord;
 
 import org.example.care.model.MedicalRecord;
-import org.example.care.model.MedicalRecordType;
+import org.example.care.model.enumeration.MedicalRecordType;
 import lombok.Builder;
 import lombok.Getter;
 

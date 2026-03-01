@@ -2,6 +2,7 @@ package org.example.care.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.care.model.enumeration.Role;
 
 import java.time.LocalDateTime;
 
@@ -38,4 +39,9 @@ public class User {
     private Doctor doctor;
 
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() { createdAt = LocalDateTime.now(); }
+
+
 }

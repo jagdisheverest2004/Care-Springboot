@@ -4,8 +4,10 @@ import org.example.care.dto.medicalrecord.MedicalRecordResponse;
 import org.example.care.dto.medicalrecord.MedicalRecordRetreival;
 import org.example.care.exception.ResourceNotFoundException;
 import org.example.care.model.*;
+import org.example.care.model.enumeration.MedicalRecordType;
 import org.example.care.repository.MedicalRecordRepository;
 import org.example.care.repository.PatientDoctorRepository;
+import org.example.care.repository.PatientRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,9 +30,12 @@ public class MedicalRecordService {
     @Autowired
     private PatientDoctorRepository patientDoctorRepository;
 
+    @Autowired
+    private PatientRepository patientRepository;
+
 
     @Transactional
-    public MedicalRecordResponse uploadMedicalRecord(Patient patient, Doctor doctor, MedicalRecordType medicalRecordType,Long patientDoctorId, MultipartFile file, Map<String, Object> aiSummary) {
+    public MedicalRecordResponse uploadMedicalRecord(Patient patient, Doctor doctor, MedicalRecordType medicalRecordType, Long patientDoctorId, MultipartFile file, Map<String, Object> aiSummary) {
 
         PatientDoctor patientDoctor = patientDoctorRepository.findById(patientDoctorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Visit not found with id: " + patientDoctorId));
@@ -46,6 +51,10 @@ public class MedicalRecordService {
 
         fileService.storeFile(record, file);
         MedicalRecord saved = medicalRecordRepository.save(record);
+        patientDoctor.getVisitRecords().add(saved);
+        patientDoctorRepository.save(patientDoctor);
+        patient.getMedicalRecords().add(saved);
+        patientRepository.save(patient);
         return MedicalRecordResponse.from(saved);
     }
 

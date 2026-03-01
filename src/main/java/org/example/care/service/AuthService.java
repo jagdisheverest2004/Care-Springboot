@@ -5,7 +5,7 @@ import org.example.care.dto.auth.RegisterRequest;
 import org.example.care.exception.ResourceNotFoundException;
 import org.example.care.model.Doctor;
 import org.example.care.model.Patient;
-import org.example.care.model.Role;
+import org.example.care.model.enumeration.Role;
 import org.example.care.model.User;
 import org.example.care.repository.DoctorRepository;
 import org.example.care.repository.PatientRepository;

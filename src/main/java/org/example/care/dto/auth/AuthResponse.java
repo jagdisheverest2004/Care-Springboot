@@ -1,6 +1,6 @@
 package org.example.care.dto.auth;
 
-import org.example.care.model.Role;
+import org.example.care.model.enumeration.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

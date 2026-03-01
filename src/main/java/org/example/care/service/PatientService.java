@@ -1,20 +1,16 @@
 package org.example.care.service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.chrono.ChronoLocalDate;
 import java.util.List;
 import java.util.Map;
 
-import org.example.care.dto.drug.PatientDrugRetreival;
 import org.example.care.dto.drug.SafetyCheckRequest;
 import org.example.care.dto.medicalrecord.MedicalRecordResponse;
-import org.example.care.dto.medicalrecord.MedicalRecordRetreival;
 import org.example.care.dto.patient.*;
 import org.example.care.exception.ResourceNotFoundException;
 import org.example.care.model.*;
-import org.example.care.repository.PatientDoctorRepository;
-import org.example.care.repository.PatientDrugRepository;
+import org.example.care.model.enumeration.MedicalRecordType;
 import org.example.care.repository.PatientRepository;
 import org.example.care.repository.UserRepository;
 import org.example.care.security.CustomUserDetails;
@@ -109,7 +105,7 @@ public class PatientService {
 
         Map<String, Object> aiSummary = aiOrchestrationService.analyzeXray(file);
 
-        return medicalRecordService.uploadMedicalRecord(patient,doctor.getDoctor(),MedicalRecordType.IMAGE, patientDoctorId, file, aiSummary);
+        return medicalRecordService.uploadMedicalRecord(patient,doctor.getDoctor(), MedicalRecordType.IMAGE, patientDoctorId, file, aiSummary);
     }
 
     public MedicalRecordResponse uploadReportAndSummarize(Long patientId, Long patientDoctorId, MultipartFile file, CustomUserDetails customUserDetails) {

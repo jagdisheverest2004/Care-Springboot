@@ -1,4 +1,4 @@
-package org.example.care.model;
+package org.example.care.model.enumeration;
 
 public enum DrugTime {
     MORNING,

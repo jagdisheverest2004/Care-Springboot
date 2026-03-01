@@ -2,7 +2,10 @@ package org.example.care.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.care.model.enumeration.RiskLevel;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -37,9 +40,15 @@ public class PatientDoctor {
 
     // NEW: Links all X-rays or PDF reports uploaded during this specific visit
     @OneToMany(mappedBy = "patientDoctor", cascade = CascadeType.ALL)
-    private List<MedicalRecord> visitRecords;
+    private List<MedicalRecord> visitRecords = new ArrayList<>();
 
     // CORRECTED: Now maps to the 'visit' field inside PatientDrug
     @OneToMany(mappedBy = "visit", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PatientDrug> prescriptions;
+    private List<PatientDrug> prescriptions = new ArrayList<>();
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private RiskLevel riskLevel; // NEW: Risk level for this specific visit, can be updated based on doctor's assessment
+
+
 }

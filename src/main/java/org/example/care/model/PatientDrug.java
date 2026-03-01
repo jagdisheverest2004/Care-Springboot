@@ -2,6 +2,8 @@ package org.example.care.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.care.model.enumeration.DrugTime;
+
 import java.time.LocalDate;
 import java.util.List;
 

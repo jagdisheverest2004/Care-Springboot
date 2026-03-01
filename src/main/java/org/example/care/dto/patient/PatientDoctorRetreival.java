@@ -3,6 +3,7 @@ package org.example.care.dto.patient;
 import lombok.Data;
 import org.example.care.dto.drug.PatientDrugRetreival;
 import org.example.care.dto.medicalrecord.MedicalRecordRetreival;
+import org.example.care.model.enumeration.RiskLevel;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,6 +15,7 @@ public class PatientDoctorRetreival {
     private String prescribedDoctorName;
     private String purpose;
     private String notes;
+    private RiskLevel riskLevel;
     private List<MedicalRecordRetreival> medicalRecords;
     private List<PatientDrugRetreival> drugsPrescribed;
     private LocalDateTime visitedAt;

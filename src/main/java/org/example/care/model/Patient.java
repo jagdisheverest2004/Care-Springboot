@@ -3,6 +3,7 @@ package org.example.care.model;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -34,14 +35,14 @@ public class Patient {
 
     // RESTORED: This is highly useful for the patient app to query all meds quickly
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PatientDrug> prescriptions;
+    private List<PatientDrug> prescriptions = new ArrayList<>();
 
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
-    private List<MedicalRecord> medicalRecords;
+    private List<MedicalRecord> medicalRecords = new ArrayList<>();
 
     // NEW: List of all visits this patient has had
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PatientDoctor> doctorVisits;
+    private List<PatientDoctor> doctorVisits = new ArrayList<>();
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

@@ -2,7 +2,7 @@ package org.example.care.security;
 
 import java.util.Collection;
 import java.util.List;
-import org.example.care.model.Role;
+import org.example.care.model.enumeration.Role;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

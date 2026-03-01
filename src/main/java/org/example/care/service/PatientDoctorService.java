@@ -28,9 +28,6 @@ public class PatientDoctorService {
     @Autowired
     private MedicalRecordService medicalRecordService;
 
-    public PatientDoctor getPatientDoctorById(Long patientDoctorId) {
-        return patientDoctorRepository.findById(patientDoctorId).orElseThrow(() -> new IllegalArgumentException("Drug not found with id: " + patientDoctorId));
-    }
 
     @Transactional
     public void createVisitation(Patient existingPatient, Doctor consultingDoctor, CreatePatientDoctorRequest visit){
@@ -40,6 +37,7 @@ public class PatientDoctorService {
         patientDoctor.setDoctor(consultingDoctor);
         patientDoctor.setPurpose(visit.getPurpose());
         patientDoctor.setNotes(visit.getNotes());
+        patientDoctor.setRiskLevel(visit.getRiskLevel());
         patientDoctor.setVisitedAt(LocalDateTime.now());
         patientDoctorRepository.save(patientDoctor);
         if(visit.getNewDrugs() != null) {
@@ -61,6 +59,7 @@ public class PatientDoctorService {
             visitRetreival.setPurpose(visit.getPurpose());
             visitRetreival.setNotes(visit.getNotes());
             visitRetreival.setVisitedAt(visit.getVisitedAt());
+            visitRetreival.setRiskLevel(visit.getRiskLevel());
 
             List<PatientDrugRetreival> drugRetreivals = patientDrugService.getPatientDrugDetails(visit.getPrescriptions());
 

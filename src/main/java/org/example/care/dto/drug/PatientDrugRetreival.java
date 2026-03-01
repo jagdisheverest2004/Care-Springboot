@@ -1,7 +1,7 @@
 package org.example.care.dto.drug;
 
 import lombok.Data;
-import org.example.care.model.DrugTime;
+import org.example.care.model.enumeration.DrugTime;
 
 import java.time.LocalDate;
 import java.util.List;

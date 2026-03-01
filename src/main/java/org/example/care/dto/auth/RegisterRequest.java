@@ -2,7 +2,7 @@ package org.example.care.dto.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import org.example.care.model.Role;
+import org.example.care.model.enumeration.Role;
 import lombok.Getter;
 import lombok.Setter;
 
