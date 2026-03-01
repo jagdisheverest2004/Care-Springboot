@@ -67,13 +67,7 @@ public class PatientService {
         CreatePatientDoctorRequest doctorVisit = updatePatient.getDoctorVisit();
 
         if(doctorVisit != null) {
-
-            if(patientDoctorId != null) {
-                patientDoctorService.createVisitation(existingPatient, patientDoctorId, doctor, doctorVisit);
-            }
-            else{
-                patientDoctorService.createVisitation(existingPatient, null,doctor, doctorVisit);
-            }
+            patientDoctorService.createVisitation(existingPatient, patientDoctorId, doctor, doctorVisit);
         }
 
         return patientRepository.save(existingPatient);
@@ -115,6 +109,16 @@ public class PatientService {
                 patients = patients.stream()
                         .filter(patient -> patient.getDoctorVisits().stream()
                                 .anyMatch(visit -> visit.getRiskLevel() == riskLevel))
+                        .collect(Collectors.toList());
+
+                if(patients.isEmpty()) {
+                    throw new ResourceNotFoundException("No patients found with name containing: " + patientName + " and risk level: " + riskLevel);
+                }
+            }
+            else{
+                patients = patients.stream()
+                        .filter(patient -> patient.getDoctorVisits().stream()
+                                .anyMatch(visit -> visit.getRiskLevel() != null))
                         .collect(Collectors.toList());
             }
         }
