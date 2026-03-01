@@ -106,20 +106,18 @@ public class PatientService {
                 throw new ResourceNotFoundException("No patients found with name containing: " + patientName);
             }
             if(riskLevel != null) {
-                patients = patients.stream()
-                        .filter(patient -> patient.getDoctorVisits().stream()
-                                .anyMatch(visit -> visit.getRiskLevel() == riskLevel))
-                        .collect(Collectors.toList());
+                patients = getPatientsByRiskLevel(patients,riskLevel);
 
                 if(patients.isEmpty()) {
                     throw new ResourceNotFoundException("No patients found with name containing: " + patientName + " and risk level: " + riskLevel);
                 }
             }
-            else{
-                patients = patients.stream()
-                        .filter(patient -> patient.getDoctorVisits().stream()
-                                .anyMatch(visit -> visit.getRiskLevel() != null))
-                        .collect(Collectors.toList());
+        }
+        else if(riskLevel != null) {
+            patients = getPatientsByRiskLevel(patients,riskLevel);
+
+            if(patients.isEmpty()) {
+                throw new ResourceNotFoundException("No patients found with risk level: " + riskLevel);
             }
         }
 
@@ -129,6 +127,13 @@ public class PatientService {
         PatientsRetreival patientsRetreival = new PatientsRetreival();
         patientsRetreival.setPatients(patientRetreivals);
         return patientsRetreival;
+    }
+
+    public List<Patient> getPatientsByRiskLevel(List<Patient> patients,RiskLevel riskLevel) {
+        return patients.stream()
+                .filter(patient -> patient.getDoctorVisits().stream()
+                        .allMatch(visit -> visit.getRiskLevel() == riskLevel))
+                .collect(Collectors.toList());
     }
 
     public MedicalRecordResponse uploadXrayAndAnalyze(Long patientId, Long patientDoctorId, MultipartFile file, CustomUserDetails customUserDetails) {
