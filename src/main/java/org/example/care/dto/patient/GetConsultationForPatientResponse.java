@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-public class PatientDoctorRetreival {
+public class GetConsultationForPatientResponse {
     private Long id;
     private Long prescribedDoctorId;
     private String prescribedDoctorName;

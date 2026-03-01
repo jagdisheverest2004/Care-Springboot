@@ -74,6 +74,8 @@ public class AuthService {
                     .contactNumber(request.getContactNumber())
                     .gender(request.getGender())
                     .bloodGroup(request.getBloodGroup())
+                    .chronicConditions(request.getChronicConditions())
+                    .allergies(request.getAllergies())
                     .build();
             patientRepository.save(patient);
         }
@@ -112,6 +114,8 @@ public class AuthService {
                 .bloodGroup(request.getBloodGroup())
                 .address(request.getAddress())
                 .contactNumber(request.getContactNumber())
+                .chronicConditions(request.getChronicConditions())
+                .allergies(request.getAllergies())
                 .build();
 
         patientRepository.save(patient);

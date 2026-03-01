@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Data
-public class AddPatientDrugRequest {
+public class AddPrescriptionRequest {
     private Long drugId;
     private String dosage;
     private String instructions;

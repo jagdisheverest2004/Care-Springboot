@@ -27,10 +27,9 @@ public class MedicalRecord {
     @JoinColumn(name = "doctor_id", nullable = false)
     private Doctor doctor;
 
-    // NEW: Link to the specific visit/consultation
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "visit_id") // Maps to the PatientDoctor bridge table
-    private PatientDoctor patientDoctor;
+    @JoinColumn(name = "visit_id")
+    private Consultation consultation;
 
     @Column(nullable = false)
     private String fileName;

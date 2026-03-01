@@ -9,17 +9,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "patient_doctors")
+@Table(name = "consultations")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PatientDoctor {
+public class Consultation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    // NEW: Link this consultation to the appointment that initiated it (Optional)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "appointment_id")
+    private Appointment appointment;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "patient_id", nullable = false)
@@ -30,25 +35,22 @@ public class PatientDoctor {
     private Doctor doctor;
 
     @Column(nullable = false)
-    private String purpose; // e.g., "Routine Checkup", "Knee Pain"
+    private String purpose;
 
     @Column(columnDefinition = "TEXT")
-    private String notes; // Doctor's clinical notes for this specific visit
+    private String notes;
 
     @Column(nullable = false)
     private LocalDateTime visitedAt;
 
-    // NEW: Links all X-rays or PDF reports uploaded during this specific visit
-    @OneToMany(mappedBy = "patientDoctor", cascade = CascadeType.ALL)
+    // FIXED: mappedBy MUST match the variable name in MedicalRecord.java ("consultation")
+    @OneToMany(mappedBy = "consultation", cascade = CascadeType.ALL)
     private List<MedicalRecord> visitRecords = new ArrayList<>();
 
-    // CORRECTED: Now maps to the 'visit' field inside PatientDrug
     @OneToMany(mappedBy = "visit", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PatientDrug> prescriptions = new ArrayList<>();
+    private List<Prescription> prescriptions = new ArrayList<>();
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private RiskLevel riskLevel; // NEW: Risk level for this specific visit, can be updated based on doctor's assessment
-
-
+    private RiskLevel riskLevel;
 }

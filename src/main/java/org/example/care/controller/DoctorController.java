@@ -2,21 +2,21 @@ package org.example.care.controller;
 
 import java.util.Map;
 
+import org.example.care.dto.appointment.CreateAppointmentRequest;
 import org.example.care.dto.auth.AuthResponse;
 import org.example.care.dto.auth.PatientRegistrationRequest;
+import org.example.care.dto.doctor.GetDoctorProfile;
 import org.example.care.dto.doctor.UpdateDoctorProfile;
 import org.example.care.dto.drug.SafetyCheckRequest;
 import org.example.care.dto.medicalrecord.MedicalRecordResponse;
 import org.example.care.dto.patient.PatientRetreival;
 import org.example.care.dto.patient.PatientsRetreival;
-import org.example.care.dto.patient.UpdatePatientConditionsRequest;
+import org.example.care.dto.patient.UpdateConsultationRequest;
 import org.example.care.model.*;
+import org.example.care.model.enumeration.AppointmentStatus;
 import org.example.care.model.enumeration.RiskLevel;
 import org.example.care.security.CustomUserDetails;
-import org.example.care.service.AuthService;
-import org.example.care.service.DoctorService;
-import org.example.care.service.FileService;
-import org.example.care.service.PatientService;
+import org.example.care.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -41,16 +41,21 @@ public class DoctorController {
     private AuthService authService;
 
     @Autowired
+    private ConsultationService consultationService;
+
+    @Autowired
     private FileService fileService;
 
     @Autowired
     private DoctorService doctorService;
 
     @PreAuthorize("hasRole('DOCTOR')")
-    @PatchMapping("/patients/{patientId}")
-    public ResponseEntity<String> updatePatient(@PathVariable Long patientId,@RequestParam(name="visitedId",required = false) Long patientDoctorId,@RequestBody UpdatePatientConditionsRequest updatePatient) {
-        Patient updatedPatient = patientService.updatePatient(patientId,patientDoctorId, updatePatient,currentUser());
-        return ResponseEntity.ok("Patient " + updatedPatient.getUser().getUsername() + " updated successfully");
+    @PatchMapping("/patients/consultation/{consultationId}/update")
+    public ResponseEntity<String> updateConsultation(@PathVariable Long consultationId,
+                                                     @RequestBody UpdateConsultationRequest updateConsultationRequest
+    ) {
+        Consultation consultation = consultationService.updateConsultation(consultationId, updateConsultationRequest);
+        return ResponseEntity.ok("Consultation updated successfully for consultation id: " + consultation.getId());
     }
 
     @PreAuthorize("hasAnyRole('DOCTOR','PATIENT')")
@@ -71,26 +76,22 @@ public class DoctorController {
 
 
     @PreAuthorize("hasRole('DOCTOR')")
-    @PostMapping(path = "/patients/{patientId}/records/xray", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<MedicalRecordResponse> uploadXrayForAnalysis(@PathVariable Long patientId,
-                                                                       @RequestParam("patientDoctorId") Long patientDoctorId,
-                                                                       @RequestParam("file") MultipartFile file,
-                                                                       @AuthenticationPrincipal CustomUserDetails currentUser
+    @PostMapping(path = "/patients/{consultationId}/records/xray", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<MedicalRecordResponse> uploadXrayForAnalysis(@PathVariable Long consultationId,
+                                                                       @RequestParam("file") MultipartFile file
     ) {
 
-        MedicalRecordResponse medicalRecordResponse = patientService.uploadXrayAndAnalyze(patientId, patientDoctorId, file, currentUser);
+        MedicalRecordResponse medicalRecordResponse = patientService.uploadXrayAndAnalyze(consultationId,file);
         return ResponseEntity.ok(medicalRecordResponse);
     }
 
     @PreAuthorize("hasRole('DOCTOR')")
-    @PostMapping(path = "/patients/{patientId}/records/report", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<MedicalRecordResponse> uploadReportForSummary(@PathVariable Long patientId,
-                                                                       @RequestParam("patientDoctorId") Long patientDoctorId,
-                                                                       @RequestParam("file") MultipartFile file,
-                                                                        @AuthenticationPrincipal CustomUserDetails currentUser
+    @PostMapping(path = "/patients/{consultationId}/records/report", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<MedicalRecordResponse> uploadReportForSummary(@PathVariable Long consultationId,
+                                                                       @RequestParam("file") MultipartFile file
     ) {
 
-        MedicalRecordResponse medicalRecordResponse = patientService.uploadReportAndSummarize(patientId, patientDoctorId, file, currentUser);
+        MedicalRecordResponse medicalRecordResponse = patientService.uploadReportAndSummarize(consultationId, file);
         return ResponseEntity.ok(medicalRecordResponse);
     }
 
@@ -147,6 +148,41 @@ public class DoctorController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasRole('DOCTOR')")
+    @GetMapping("/get-profile")
+    public ResponseEntity<GetDoctorProfile> getDoctorProfile(){
+        GetDoctorProfile response = doctorService.getDoctorProfile(currentUser().getId());
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("hasRole('DOCTOR')")
+    @PatchMapping("/patients/appointments/{appointmentId}/scheduled")
+    public ResponseEntity<String> updatePatientAppointmentStatus(@RequestParam(name = "status", required = false) AppointmentStatus appointmentStatus,
+                                                                 @PathVariable Long appointmentId){
+        String response = doctorService.updatePatientAppointmentStatus(appointmentStatus, appointmentId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("hasRole('DOCTOR')")
+    @GetMapping("/patients/appointments")
+    public ResponseEntity<?> getDoctorAppointments(@AuthenticationPrincipal CustomUserDetails currentUser,
+                                                   @RequestParam(name = "status", required = false) AppointmentStatus appointmentStatus){
+        return ResponseEntity.ok(doctorService.getDoctorAppointments(appointmentStatus, currentUser.getId()));
+    }
+
+    @PreAuthorize("hasRole('DOCTOR')")
+    @PostMapping("/patients/appointments")
+    public ResponseEntity<String> schedulePatientAppointment(@AuthenticationPrincipal CustomUserDetails currentUser,
+                                                             @RequestBody CreateAppointmentRequest request){
+        String response = doctorService.schedulePatientAppointment(currentUser.getId(), request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("hasRole('DOCTOR')")
+    @GetMapping("/patients/consultations")
+    public ResponseEntity<?> getDoctorConsultations(@AuthenticationPrincipal CustomUserDetails currentUser) {
+        return ResponseEntity.ok(doctorService.getDoctorConsultations(currentUser.getId()));
+    }
 
     protected CustomUserDetails currentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

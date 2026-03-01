@@ -14,7 +14,7 @@ import org.example.care.exception.ResourceNotFoundException;
 import org.example.care.model.*;
 import org.example.care.model.enumeration.MedicalRecordType;
 import org.example.care.model.enumeration.RiskLevel;
-import org.example.care.repository.PatientDoctorRepository;
+import org.example.care.repository.ConsultationRepository;
 import org.example.care.repository.PatientRepository;
 import org.example.care.repository.UserRepository;
 import org.example.care.security.CustomUserDetails;
@@ -28,7 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class PatientService {
 
     @Autowired
-    private PatientDoctorRepository patientDoctorRepository;
+    private ConsultationRepository consultationRepository;
 
     @Autowired
     private PatientRepository patientRepository;
@@ -42,11 +42,9 @@ public class PatientService {
     @Autowired
     private AiOrchestrationService aiOrchestrationService;
 
-    @Autowired
-    private DoctorService doctorService;
 
     @Autowired
-    private PatientDoctorService patientDoctorService;
+    private ConsultationService consultationService;
 
 
     public Patient getPatientById(Long patientId) {
@@ -54,24 +52,6 @@ public class PatientService {
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with id: " + patientId));
     }
 
-
-    @Transactional
-    public Patient updatePatient(Long patientId,Long patientDoctorId, UpdatePatientConditionsRequest updatePatient, CustomUserDetails customUserDetails) {
-        Patient existingPatient = getPatientById(patientId);
-        Doctor doctor = doctorService.getDoctorByUserId(customUserDetails.getId());
-
-        if (updatePatient.getChronicConditions() != null) {
-            existingPatient.setChronicConditions(updatePatient.getChronicConditions());
-        }
-
-        CreatePatientDoctorRequest doctorVisit = updatePatient.getDoctorVisit();
-
-        if(doctorVisit != null) {
-            patientDoctorService.createVisitation(existingPatient, patientDoctorId, doctor, doctorVisit);
-        }
-
-        return patientRepository.save(existingPatient);
-    }
 
 
     public PatientRetreival getPatientFullDetails(Long patientId) {
@@ -86,8 +66,9 @@ public class PatientService {
         patientRetreival.setContactNumber(patient.getContactNumber());
         patientRetreival.setBloodGroup(patient.getBloodGroup());
         patientRetreival.setChronicConditions(patient.getChronicConditions());
+        patientRetreival.setAllergies(patient.getAllergies());
 
-        List<PatientDoctorRetreival> doctorVisits = patientDoctorService.getPatientDoctorDetails(patient.getDoctorVisits());
+        List<GetConsultationForPatientResponse> doctorVisits = consultationService.getPatientDoctorDetails(patient.getVisits());
         patientRetreival.setDoctorVisits(doctorVisits);
 
         return patientRetreival;
@@ -95,8 +76,8 @@ public class PatientService {
 
     public PatientsRetreival searchPatientsByName(String patientName, RiskLevel riskLevel, Long doctorUserId) {
         List<Patient> patients;
-        List<PatientDoctor> visitedPatients = patientDoctorRepository.findVisitedPatientsByDoctorUserId(doctorUserId);
-        patients = visitedPatients.stream().map(PatientDoctor::getPatient).toList();
+        List<Consultation> visitedPatients = consultationRepository.findVisitedPatientsByDoctorUserId(doctorUserId);
+        patients = visitedPatients.stream().map(Consultation::getPatient).toList();
         if (patientName != null && !patientName.isEmpty()) {
             patients = patients.stream()
                     .filter(patient -> patient.getUser().getPatient().getName().toLowerCase().contains(patientName.toLowerCase()))
@@ -131,28 +112,26 @@ public class PatientService {
 
     public List<Patient> getPatientsByRiskLevel(List<Patient> patients,RiskLevel riskLevel) {
         return patients.stream()
-                .filter(patient -> patient.getDoctorVisits().stream()
+                .filter(patient -> patient.getVisits().stream()
                         .allMatch(visit -> visit.getRiskLevel() == riskLevel))
                 .collect(Collectors.toList());
     }
 
-    public MedicalRecordResponse uploadXrayAndAnalyze(Long patientId, Long patientDoctorId, MultipartFile file, CustomUserDetails customUserDetails) {
-        Patient patient = this.getPatientById(patientId);
-        User doctor = userRepository.findById(customUserDetails.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
+    public MedicalRecordResponse uploadXrayAndAnalyze(Long consultationId, MultipartFile file) {
+        Consultation consultation = consultationRepository.findById(consultationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Consultation not found with id: " + consultationId));
 
         String aiSummary = aiOrchestrationService.analyzeXray(file);
 
-        return medicalRecordService.uploadMedicalRecord(patient,doctor.getDoctor(), MedicalRecordType.IMAGE, patientDoctorId, file, aiSummary);
+        return medicalRecordService.uploadMedicalRecord(consultation, MedicalRecordType.IMAGE, file, aiSummary);
     }
 
-    public MedicalRecordResponse uploadReportAndSummarize(Long patientId, Long patientDoctorId, MultipartFile file, CustomUserDetails customUserDetails) {
-        Patient patient = this.getPatientById(patientId);
-        User doctor = userRepository.findById(customUserDetails.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
+    public MedicalRecordResponse uploadReportAndSummarize(Long consultationId, MultipartFile file) {
+        Consultation consultation = consultationRepository.findById(consultationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Consultation not found with id: " + consultationId));
 
         String narrative = aiOrchestrationService.summarizeReports(file);
-        return medicalRecordService.uploadMedicalRecord(patient, doctor.getDoctor(),MedicalRecordType.REPORT, patientDoctorId, file, narrative);
+        return medicalRecordService.uploadMedicalRecord(consultation ,MedicalRecordType.REPORT, file, narrative);
     }
 
     public Map<String, Object> checkDrugSafety(SafetyCheckRequest request) {

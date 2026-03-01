@@ -34,6 +34,8 @@ public class RegisterRequest {
     private Integer age;
     private String gender;
     private String bloodGroup;
+    private String allergies;
+    private String chronicConditions;
 
     // Doctor
     private String specialization;

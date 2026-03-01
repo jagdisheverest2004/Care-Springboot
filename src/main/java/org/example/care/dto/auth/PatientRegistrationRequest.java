@@ -25,4 +25,10 @@ public class PatientRegistrationRequest {
 
     @Column(nullable = false)
     private LocalDate dateOfBirth;
+
+    @Column(columnDefinition = "TEXT")
+    private String chronicConditions;
+
+    @Column(columnDefinition = "TEXT")
+    private String allergies;
 }

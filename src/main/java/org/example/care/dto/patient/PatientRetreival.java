@@ -16,5 +16,6 @@ public class PatientRetreival {
     private String contactNumber;
     private String address;
     private String chronicConditions;
-    private List<PatientDoctorRetreival> doctorVisits;
+    private String allergies;
+    private List<GetConsultationForPatientResponse> doctorVisits;
 }

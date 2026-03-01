@@ -5,8 +5,9 @@ import org.example.care.dto.medicalrecord.MedicalRecordRetreival;
 import org.example.care.exception.ResourceNotFoundException;
 import org.example.care.model.*;
 import org.example.care.model.enumeration.MedicalRecordType;
+import org.example.care.repository.DoctorRepository;
 import org.example.care.repository.MedicalRecordRepository;
-import org.example.care.repository.PatientDoctorRepository;
+import org.example.care.repository.ConsultationRepository;
 import org.example.care.repository.PatientRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 @SuppressWarnings("null")
@@ -28,33 +28,34 @@ public class MedicalRecordService {
     private MedicalRecordRepository medicalRecordRepository;
 
     @Autowired
-    private PatientDoctorRepository patientDoctorRepository;
+    private ConsultationRepository consultationRepository;
 
     @Autowired
     private PatientRepository patientRepository;
+    @Autowired
+    private DoctorRepository doctorRepository;
 
 
     @Transactional
-    public MedicalRecordResponse uploadMedicalRecord(Patient patient, Doctor doctor, MedicalRecordType medicalRecordType, Long patientDoctorId, MultipartFile file, String aiSummary) {
-
-        PatientDoctor patientDoctor = patientDoctorRepository.findById(patientDoctorId)
-                .orElseThrow(() -> new ResourceNotFoundException("Visit not found with id: " + patientDoctorId));
+    public MedicalRecordResponse uploadMedicalRecord(Consultation consultation,MedicalRecordType medicalRecordType, MultipartFile file, String aiSummary) {
 
         MedicalRecord record = MedicalRecord.builder()
-                .patient(patient)
-                .doctor(doctor)
+                .patient(consultation.getPatient())
+                .doctor(consultation.getDoctor())
                 .type(medicalRecordType)
                 .fileName(file.getOriginalFilename())
                 .summary(aiSummary)
-                .patientDoctor(patientDoctor)
+                .consultation(consultation)
                 .build();
 
         fileService.storeFile(record, file);
         MedicalRecord saved = medicalRecordRepository.save(record);
-        patientDoctor.getVisitRecords().add(saved);
-        patientDoctorRepository.save(patientDoctor);
-        patient.getMedicalRecords().add(saved);
-        patientRepository.save(patient);
+        consultation.getVisitRecords().add(saved);
+        consultationRepository.save(consultation);
+        consultation.getPatient().getMedicalRecords().add(saved);
+        patientRepository.save(consultation.getPatient());
+        consultation.getDoctor().getTreatedRecords().add(saved);
+        doctorRepository.save(consultation.getDoctor());
         return MedicalRecordResponse.from(saved);
     }
 

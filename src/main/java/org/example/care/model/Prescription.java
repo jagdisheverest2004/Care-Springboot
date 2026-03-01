@@ -8,9 +8,9 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Entity
-@Table(name = "patient_drugs")
+@Table(name = "prescriptions")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class PatientDrug {
+public class Prescription {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -19,10 +19,9 @@ public class PatientDrug {
     @JoinColumn(name = "drug_id", nullable = false)
     private Drug drug;
 
-    // NEW: Links this specific prescription to the visit it was created in
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "visit_id", nullable = false)
-    private PatientDoctor visit;
+    private Consultation visit;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "patient_id", nullable = false)
@@ -32,9 +31,8 @@ public class PatientDrug {
     @JoinColumn(name = "doctor_id", nullable = false)
     private Doctor prescribedBy;
 
-    private String dosage; // e.g., "500mg"
-
-    private String instructions; // e.g., "Take after food"
+    private String dosage;
+    private String instructions;
 
     @Column(nullable = false)
     private LocalDate startDate;
@@ -42,7 +40,7 @@ public class PatientDrug {
     private LocalDate endDate;
 
     @ElementCollection(targetClass = DrugTime.class)
-    @CollectionTable(name = "patient_drug_times", joinColumns = @JoinColumn(name = "patient_drug_id"))
+    @CollectionTable(name = "prescription_times", joinColumns = @JoinColumn(name = "prescription_id"))
     @Enumerated(EnumType.STRING)
     @Column(name = "drug_time")
     private List<DrugTime> drugTimes;

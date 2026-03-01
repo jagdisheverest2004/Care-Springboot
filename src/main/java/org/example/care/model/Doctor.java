@@ -3,6 +3,7 @@ package org.example.care.model;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -32,15 +33,18 @@ public class Doctor {
     @Column(nullable = false)
     private String contactInfo;
 
+    // NEW: List of all appointments scheduled with this doctor
+    @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Appointment> appointments = new ArrayList<>();
+
     @OneToMany(mappedBy = "doctor")
-    private List<MedicalRecord> treatedRecords;
+    private List<MedicalRecord> treatedRecords = new ArrayList<>();
 
     @OneToMany(mappedBy = "prescribedBy")
-    private List<PatientDrug> writtenPrescriptions;
+    private List<Prescription> writtenPrescriptions = new ArrayList<>();
 
-    //List of all visits/consultations this doctor has handled
     @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PatientDoctor> patientConsultations;
+    private List<Consultation> patientConsultations = new ArrayList<>();
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

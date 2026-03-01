@@ -44,16 +44,21 @@ public class Patient {
     @Column(columnDefinition = "TEXT")
     private String chronicConditions;
 
-    // RESTORED: This is highly useful for the patient app to query all meds quickly
+    @Column(columnDefinition = "TEXT")
+    private String allergies;
+
+    // NEW: List of all appointments booked by this patient
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PatientDrug> prescriptions = new ArrayList<>();
+    private List<Appointment> appointments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Prescription> prescriptions = new ArrayList<>();
 
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
     private List<MedicalRecord> medicalRecords = new ArrayList<>();
 
-    // NEW: List of all visits this patient has had
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PatientDoctor> doctorVisits = new ArrayList<>();
+    private List<Consultation> visits = new ArrayList<>();
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

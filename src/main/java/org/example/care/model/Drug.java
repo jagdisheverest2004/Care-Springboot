@@ -21,5 +21,5 @@ public class Drug {
     private String generalDescription;
 
     @OneToMany(mappedBy = "drug")
-    private List<PatientDrug> patientDrugs = new ArrayList<>();
+    private List<Prescription> prescriptions = new ArrayList<>();
 }
