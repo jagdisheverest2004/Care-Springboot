@@ -32,21 +32,24 @@ public class AiOrchestrationService {
         log.info("Initiating request to Flask AI engine for X-ray analysis. File: {}", file.getOriginalFilename());
         try{
             MultipartBodyBuilder bodyBuilder = multipartBody(file, "file");
-            Map<String,Object> response = aiWebClient.post()
+            List<Map<String,Object>> responseList = aiWebClient.post()
                     .uri("/analyze_xray")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
                     .block();
             log.info("Successfully received X-ray analysis response from Flask API.");
-            return response;
+
+            if (responseList != null && !responseList.isEmpty()) {
+                return responseList.get(0);
+            }
+            throw new RuntimeException("Flask API returned an empty analysis result");
         }
         catch (Exception e) {
             log.error("Error during X-ray analysis request: {}", e.getMessage());
             throw new RuntimeException("Failed to analyze X-ray: " + e.getMessage());
         }
-
     }
 
     public String summarizeReports(MultipartFile file) {
@@ -54,16 +57,27 @@ public class AiOrchestrationService {
         log.info("Initiating request to Flask AI engine for report summarization. File: {}", file.getOriginalFilename());
         try{
             MultipartBodyBuilder bodyBuilder = multipartBody(file, "report");
-            String response = aiWebClient.post()
+            Map<String,Object> response = aiWebClient.post()
                     .uri("/summarize_reports")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
                     .retrieve()
-                    .bodyToMono(String.class)
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .block();
 
             log.info("Successfully received summarization response from Flask API.");
-            return response;
+
+            if (response != null && response.containsKey("summary")) {
+                List<Map<String, Object>> summaryList = (List<Map<String, Object>>) response.get("summary");
+                if (summaryList != null && !summaryList.isEmpty()) {
+                    String rawSummary = (String) summaryList.get(0).get("summary");
+                    // Clean and return the string
+                    return cleanSummaryText(rawSummary);
+                }
+            }
+
+            log.error("Flask API returned an empty or invalid summary result");
+            throw new RuntimeException("Flask API returned an empty or invalid summary result");
         }
         catch (Exception e) {
             log.error("Error during report summarization request: {}", e.getMessage());
@@ -119,5 +133,21 @@ public class AiOrchestrationService {
         } catch (IOException ex) {
             throw new IllegalArgumentException("Unable to process uploaded file");
         }
+    }
+
+    // --- NEW METHOD: Cleans out markdown, slashes, and newlines ---
+    public String cleanSummaryText(String text) {
+        if (text == null) return "";
+
+        // Remove markdown asterisks (**)
+        text = text.replace("*", "");
+        // Remove backslashes (\)
+        text = text.replace("\\", "");
+        // Replace newlines and carriage returns with a space
+        text = text.replace("\n", " ").replace("\r", " ");
+        // Collapse multiple spaces into a single space
+        text = text.replaceAll("\\s+", " ").trim();
+
+        return text;
     }
 }

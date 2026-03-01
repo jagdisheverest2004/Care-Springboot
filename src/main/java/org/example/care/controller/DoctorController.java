@@ -10,6 +10,7 @@ import org.example.care.dto.patient.PatientRetreival;
 import org.example.care.dto.patient.PatientsRetreival;
 import org.example.care.dto.patient.UpdatePatientConditionsRequest;
 import org.example.care.model.*;
+import org.example.care.model.enumeration.RiskLevel;
 import org.example.care.repository.MedicalRecordRepository;
 import org.example.care.repository.UserRepository;
 import org.example.care.security.CustomUserDetails;
@@ -69,8 +70,10 @@ public class DoctorController {
 
     @PreAuthorize("hasRole('DOCTOR')")
     @GetMapping("/patients")
-    public ResponseEntity<PatientsRetreival> getPatients(@RequestParam(name = "q", required = false) String query) {
-        PatientsRetreival patientsRetreival = patientService.searchPatientsByName(query);
+    public ResponseEntity<PatientsRetreival> getPatients(@RequestParam(name = "patientName", required = false) String patientName,
+                                                         @RequestParam(name = "riskLevel", required = false)RiskLevel riskLevel,
+                                                         @AuthenticationPrincipal CustomUserDetails currentUser){
+        PatientsRetreival patientsRetreival = patientService.searchPatientsByName(patientName,riskLevel,currentUser.getId());
         return ResponseEntity.ok(patientsRetreival);
     }
 

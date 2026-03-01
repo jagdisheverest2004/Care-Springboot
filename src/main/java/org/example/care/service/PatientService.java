@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.chrono.ChronoLocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.example.care.dto.drug.SafetyCheckRequest;
 import org.example.care.dto.medicalrecord.MedicalRecordResponse;
@@ -11,6 +12,8 @@ import org.example.care.dto.patient.*;
 import org.example.care.exception.ResourceNotFoundException;
 import org.example.care.model.*;
 import org.example.care.model.enumeration.MedicalRecordType;
+import org.example.care.model.enumeration.RiskLevel;
+import org.example.care.repository.PatientDoctorRepository;
 import org.example.care.repository.PatientRepository;
 import org.example.care.repository.UserRepository;
 import org.example.care.security.CustomUserDetails;
@@ -22,6 +25,9 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 @SuppressWarnings("null")
 public class PatientService {
+
+    @Autowired
+    private PatientDoctorRepository patientDoctorRepository;
 
     @Autowired
     private PatientRepository patientRepository;
@@ -71,7 +77,7 @@ public class PatientService {
         Patient patient = getPatientById(patientId);
         PatientRetreival patientRetreival = new PatientRetreival();
         patientRetreival.setId(patient.getId());
-        patientRetreival.setName(patient.getUser().getUsername());
+        patientRetreival.setName(patient.getUser().getPatient().getName());
         patientRetreival.setAge(patient.getAge());
         patientRetreival.setGender(patient.getGender());
         patientRetreival.setBloodGroup(patient.getBloodGroup());
@@ -83,15 +89,28 @@ public class PatientService {
         return patientRetreival;
     }
 
-    public PatientsRetreival searchPatientsByName(String query) {
+    public PatientsRetreival searchPatientsByName(String patientName, RiskLevel riskLevel, Long doctorUserId) {
         List<Patient> patients;
-        if (query == null || query.isBlank()) {
-            patients = patientRepository.findAll();
-        } else {
-            patients = patientRepository.findByNameContainingIgnoreCase(query);
+        List<PatientDoctor> visitedPatients = patientDoctorRepository.findVisitedPatientsByDoctorUserId(doctorUserId);
+        patients = visitedPatients.stream().map(PatientDoctor::getPatient).toList();
+        if (patientName != null && !patientName.isEmpty()) {
+            patients = patients.stream()
+                    .filter(patient -> patient.getUser().getPatient().getName().toLowerCase().contains(patientName.toLowerCase()))
+                    .collect(Collectors.toList());
+
+            if(patients.isEmpty()) {
+                throw new ResourceNotFoundException("No patients found with name containing: " + patientName);
+            }
+            if(riskLevel != null) {
+                patients = patients.stream()
+                        .filter(patient -> patient.getDoctorVisits().stream()
+                                .anyMatch(visit -> visit.getRiskLevel() == riskLevel))
+                        .collect(Collectors.toList());
+            }
         }
 
-        List<PatientRetreival> patientRetreivals = patients.stream().map(patient -> this.getPatientFullDetails(patient.getId())).toList();
+
+        List<PatientRetreival> patientRetreivals = patients.stream().map(patient -> this.getPatientFullDetails(patient.getId())).collect(Collectors.toList());
 
         PatientsRetreival patientsRetreival = new PatientsRetreival();
         patientsRetreival.setPatients(patientRetreivals);

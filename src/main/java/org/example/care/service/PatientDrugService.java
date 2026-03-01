@@ -11,7 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @SuppressWarnings("null")
@@ -38,9 +40,12 @@ public class PatientDrugService {
             patientDrug.setVisit(patientDoctor);
             patientDrugRepository.save(patientDrug);
             return patientDrug;
-        }).toList();
+        }).collect(Collectors.toList());
         patientDoctor.setPrescriptions(patientDrugs);
-        existingPatient.setPrescriptions(patientDrugs);
+        if (existingPatient.getPrescriptions() == null) {
+            existingPatient.setPrescriptions(new ArrayList<>());
+        }
+        existingPatient.getPrescriptions().addAll(patientDrugs);
     }
 
     public List<PatientDrugRetreival> getPatientDrugDetails(List<PatientDrug> prescriptions) {
