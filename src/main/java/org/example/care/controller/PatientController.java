@@ -1,5 +1,6 @@
 package org.example.care.controller;
 
+import org.example.care.dto.appointment.CreateAppointmentRequest;
 import org.example.care.dto.auth.AuthResponse;
 import org.example.care.dto.auth.DoctorRegistrationRequest;
 import org.example.care.dto.patient.UpdatePatientProfile;
@@ -52,6 +53,16 @@ public class PatientController {
             @RequestBody UpdatePatientProfile request) {
 
         AuthResponse response = patientService.updatePatientProfile(currentUser.getId(), request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("hasRole('PATIENT')")
+    @PostMapping("/create-appointment/doctor/{doctorId}")
+    public ResponseEntity<String> createAppointment(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @PathVariable Long doctorId,
+            CreateAppointmentRequest request){
+        String response = patientService.createAppointment(currentUser.getId(),doctorId, request);
         return ResponseEntity.ok(response);
     }
 }

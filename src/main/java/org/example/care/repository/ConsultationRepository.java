@@ -10,6 +10,6 @@ import java.util.List;
 @Repository
 public interface ConsultationRepository extends JpaRepository<Consultation,Long> {
 
-    @Query("SELECT c FROM Consultation c WHERE c.patient.user.id = :patientUserId")
+    @Query("SELECT c FROM Consultation c WHERE c.doctor.user.id = :doctorUserId")
     List<Consultation> findVisitedPatientsByDoctorUserId(Long doctorUserId);
 }

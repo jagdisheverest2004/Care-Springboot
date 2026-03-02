@@ -109,9 +109,9 @@ public class DoctorService {
         return response;
     }
 
-    public String schedulePatientAppointment(Long id, CreateAppointmentRequest request) {
+    public String schedulePatientAppointment(Long id,Long patientId, CreateAppointmentRequest request) {
         Doctor doctor = getDoctorByUserId(id);
-        appointmentService.schedulePatientAppointment(doctor, request);
+        appointmentService.schedulePatientAppointment(doctor,patientId, request);
         return "Appointment scheduled successfully";
     }
 

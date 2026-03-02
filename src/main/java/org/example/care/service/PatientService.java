@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.example.care.dto.appointment.CreateAppointmentRequest;
 import org.example.care.dto.auth.AuthResponse;
 import org.example.care.dto.drug.SafetyCheckRequest;
 import org.example.care.dto.medicalrecord.MedicalRecordResponse;
@@ -45,6 +46,8 @@ public class PatientService {
 
     @Autowired
     private ConsultationService consultationService;
+    @Autowired
+    private AppointmentService appointmentService;
 
 
     public Patient getPatientById(Long patientId) {
@@ -172,5 +175,11 @@ public class PatientService {
                 .role(patient.getUser().getRole())
                 .username(patient.getUser().getUsername())
                 .build();
+    }
+
+    public String createAppointment(Long id,Long doctorId, CreateAppointmentRequest request) {
+        Patient patient = this.getPatientById(id);
+        appointmentService.createPatientAppointment(patient,doctorId, request);
+        return "Appointment request sent successfully to doctor with id: " + doctorId;
     }
 }

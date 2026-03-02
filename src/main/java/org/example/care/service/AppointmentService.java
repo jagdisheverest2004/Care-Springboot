@@ -7,12 +7,14 @@ import org.example.care.model.Doctor;
 import org.example.care.model.Patient;
 import org.example.care.model.enumeration.AppointmentStatus;
 import org.example.care.repository.AppointmentRepository;
+import org.example.care.repository.DoctorRepository;
 import org.example.care.repository.PatientRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.print.Doc;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,6 +26,8 @@ public class AppointmentService {
 
     @Autowired
     private PatientRepository patientRepository;
+    @Autowired
+    private DoctorRepository doctorRepository;
 
     // Runs automatically every hour to flag missed appointments
     @Scheduled(cron = "0 0 * * * *")
@@ -52,9 +56,21 @@ public class AppointmentService {
         }).toList();
     }
 
-    public void schedulePatientAppointment(Doctor doctor, CreateAppointmentRequest request) {
-        Patient patient = patientRepository.findById(request.getPatientId())
-                .orElseThrow(() -> new RuntimeException("Patient not found with id: " + request.getPatientId()));
+    public void schedulePatientAppointment(Doctor doctor,Long patientId, CreateAppointmentRequest request) {
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new RuntimeException("Patient not found with id: " + patientId));
+
+        Appointment appointment = new Appointment();
+        appointment.setDoctor(doctor);
+        appointment.setPatient(patient);
+        appointment.setAppointmentDate(request.getAppointmentDateTime());
+        appointment.setReasonForAppointment(request.getReasonForAppointment());
+        appointmentRepository.save(appointment);
+    }
+
+    public void createPatientAppointment(Patient patient,Long doctorId, CreateAppointmentRequest request){
+        Doctor doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + doctorId));
 
         Appointment appointment = new Appointment();
         appointment.setDoctor(doctor);

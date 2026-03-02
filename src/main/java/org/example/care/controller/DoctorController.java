@@ -171,10 +171,11 @@ public class DoctorController {
     }
 
     @PreAuthorize("hasRole('DOCTOR')")
-    @PostMapping("/patients/appointments")
+    @PostMapping("/patients/{patientId}/appointments")
     public ResponseEntity<String> schedulePatientAppointment(@AuthenticationPrincipal CustomUserDetails currentUser,
+                                                             @PathVariable Long patientId,
                                                              @RequestBody CreateAppointmentRequest request){
-        String response = doctorService.schedulePatientAppointment(currentUser.getId(), request);
+        String response = doctorService.schedulePatientAppointment(currentUser.getId(), patientId,request);
         return ResponseEntity.ok(response);
     }
 
