@@ -1,6 +1,6 @@
 package org.example.care.service;
 
-import org.example.care.dto.drug.PatientDrugRetreival;
+import org.example.care.dto.drug.PrescriptionRetreival;
 import org.example.care.dto.patient.CreateConsultationRequest;
 import org.example.care.model.Consultation;
 import org.example.care.model.Prescription;
@@ -25,7 +25,7 @@ public class PrescriptionService {
 
 
     @Transactional
-    public void createPatientDrug(CreateConsultationRequest visit, Consultation consultation) {
+    public void createPrescription(CreateConsultationRequest visit, Consultation consultation) {
 
         if (visit.getNewDrugs() == null || visit.getNewDrugs().isEmpty()) {
             return;
@@ -65,17 +65,17 @@ public class PrescriptionService {
         consultation.getDoctor().getWrittenPrescriptions().addAll(newPrescriptions);
     }
 
-    public List<PatientDrugRetreival> getPatientDrugDetails(List<Prescription> prescriptions) {
-        return prescriptions.stream().map(patientDrug -> {
-            PatientDrugRetreival drugRetreival = new PatientDrugRetreival();
-            drugRetreival.setId(patientDrug.getId());
-            drugRetreival.setDrugId(patientDrug.getDrug().getId());
-            drugRetreival.setDrugName(patientDrug.getDrug().getDrugName());
-            drugRetreival.setDosage(patientDrug.getDosage());
-            drugRetreival.setInstructions(patientDrug.getInstructions());
-            drugRetreival.setStartDate(patientDrug.getStartDate());
-            drugRetreival.setEndDate(patientDrug.getEndDate());
-            drugRetreival.setDrugTimes(patientDrug.getDrugTimes());
+    public List<PrescriptionRetreival> getPrescriptionDetails(List<Prescription> prescriptions) {
+        return prescriptions.stream().map(prescription -> {
+            PrescriptionRetreival drugRetreival = new PrescriptionRetreival();
+            drugRetreival.setId(prescription.getId());
+            drugRetreival.setDrugId(prescription.getDrug().getId());
+            drugRetreival.setDrugName(prescription.getDrug().getDrugName());
+            drugRetreival.setDosage(prescription.getDosage());
+            drugRetreival.setInstructions(prescription.getInstructions());
+            drugRetreival.setStartDate(prescription.getStartDate());
+            drugRetreival.setEndDate(prescription.getEndDate());
+            drugRetreival.setDrugTimes(prescription.getDrugTimes());
             return drugRetreival;
         }).toList();
     }

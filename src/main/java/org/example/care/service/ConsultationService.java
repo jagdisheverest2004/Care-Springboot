@@ -1,7 +1,7 @@
 package org.example.care.service;
 
 import org.example.care.dto.consultation.GetConsultationResponse;
-import org.example.care.dto.drug.PatientDrugRetreival;
+import org.example.care.dto.drug.PrescriptionRetreival;
 import org.example.care.dto.medicalrecord.MedicalRecordRetreival;
 import org.example.care.dto.patient.CreateConsultationRequest;
 import org.example.care.dto.patient.GetConsultationForPatientResponse;
@@ -47,9 +47,11 @@ public class ConsultationService {
         consultation.setNotes(visit.getNotes());
         consultation.setRiskLevel(visit.getRiskLevel());
         consultation.setVisitedAt(LocalDateTime.now());
+        consultation.getAppointment().setStatus(AppointmentStatus.COMPLETED);
+        appointmentRepository.save(consultation.getAppointment());
         consultationRepository.save(consultation);
         if(visit.getNewDrugs() != null) {
-            prescriptionService.createPatientDrug(visit,consultation);
+            prescriptionService.createPrescription(visit,consultation);
         }
         consultationRepository.save(consultation);
         consultation.getPatient().getVisits().add(consultation);
@@ -60,7 +62,7 @@ public class ConsultationService {
         return consultation;
     }
 
-    public List<GetConsultationForPatientResponse> getPatientDoctorDetails(List<Consultation> doctorVisits) {
+    public List<GetConsultationForPatientResponse> getConsultationForPatientResponses(List<Consultation> doctorVisits) {
 
         return doctorVisits.stream().map(visit -> {
             Doctor treatedDoctor = visit.getDoctor();
@@ -73,7 +75,7 @@ public class ConsultationService {
             visitRetreival.setVisitedAt(visit.getVisitedAt());
             visitRetreival.setRiskLevel(visit.getRiskLevel());
 
-            List<PatientDrugRetreival> drugRetreivals = prescriptionService.getPatientDrugDetails(visit.getPrescriptions());
+            List<PrescriptionRetreival> drugRetreivals = prescriptionService.getPrescriptionDetails(visit.getPrescriptions());
 
             List<MedicalRecordRetreival> recordRetreivals = medicalRecordService.getMedicalRecordDetails(visit.getVisitRecords());
 
@@ -103,7 +105,6 @@ public class ConsultationService {
                 .build();
 
         // Change appointment status to completed
-        appointment.setStatus(AppointmentStatus.COMPLETED);
         appointment.setConsultation(consultation);
 
         consultationRepository.save(consultation);
@@ -113,6 +114,8 @@ public class ConsultationService {
     public List<GetConsultationResponse> getConsultationDetails(List<Consultation> patientConsultations) {
         return patientConsultations.stream().map(consultation -> {
             GetConsultationResponse response = new GetConsultationResponse();
+            response.setPatientId(consultation.getPatient().getId());
+            response.setPatientName(consultation.getPatient().getName());
             response.setConsultationId(consultation.getId());
             response.setPurpose(consultation.getPurpose());
             response.setNotes(consultation.getNotes());

@@ -61,7 +61,7 @@ public class PatientController {
     public ResponseEntity<String> createAppointment(
             @AuthenticationPrincipal CustomUserDetails currentUser,
             @PathVariable Long doctorId,
-            CreateAppointmentRequest request){
+            @RequestBody CreateAppointmentRequest request){
         String response = patientService.createAppointment(currentUser.getId(),doctorId, request);
         return ResponseEntity.ok(response);
     }

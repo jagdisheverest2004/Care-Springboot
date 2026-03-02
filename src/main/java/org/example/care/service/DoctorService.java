@@ -2,12 +2,11 @@ package org.example.care.service;
 
 import org.example.care.dto.appointment.CreateAppointmentRequest;
 import org.example.care.dto.appointment.GetAppointmentResponse;
-import org.example.care.dto.appointment.GetAppointmentResponses;
 import org.example.care.dto.auth.AuthResponse;
 import org.example.care.dto.consultation.GetConsultationResponse;
-import org.example.care.dto.consultation.GetConsultationResponses;
 import org.example.care.dto.doctor.GetDoctorProfile;
 import org.example.care.dto.doctor.UpdateDoctorProfile;
+import org.example.care.exception.ResourceNotFoundException;
 import org.example.care.model.Appointment;
 import org.example.care.model.Doctor;
 import org.example.care.model.enumeration.AppointmentStatus;
@@ -75,11 +74,8 @@ public class DoctorService {
 
         List<GetAppointmentResponse> appointResponsesList = appointmentService.getAppointmentsForDoctor(doctor.getAppointments());
         List<GetConsultationResponse> consultationResponsesList = consultationService.getConsultationDetails(doctor.getPatientConsultations());
-        getDoctorProfile.setAppointments(new GetAppointmentResponses());
-        getDoctorProfile.getAppointments().setAppointments(appointResponsesList);
-        getDoctorProfile.setConsultations(new GetConsultationResponses());
-        getDoctorProfile.getConsultations().setConsultations(consultationResponsesList);
-
+        getDoctorProfile.setAppointments(appointResponsesList);
+        getDoctorProfile.setConsultations(consultationResponsesList);
         return getDoctorProfile;
     }
 
@@ -93,7 +89,7 @@ public class DoctorService {
         return "Appointment status updated successfully to " + appointmentStatus;
     }
 
-    public GetAppointmentResponses getDoctorAppointments(AppointmentStatus appointmentStatus, Long id) {
+    public List<GetAppointmentResponse> getDoctorAppointments(AppointmentStatus appointmentStatus, Long id) {
         Doctor doctor = getDoctorByUserId(id);
         List<Appointment> appointments = doctor.getAppointments();
 
@@ -104,9 +100,12 @@ public class DoctorService {
         }
 
         List<GetAppointmentResponse> responseList = appointmentService.getAppointmentsForDoctor(appointments);
-        GetAppointmentResponses response = new GetAppointmentResponses();
-        response.setAppointments(responseList);
-        return response;
+
+        if(responseList.isEmpty()){
+            throw new ResourceNotFoundException("No appointments found for the specified status");
+        }
+
+        return responseList;
     }
 
     public String schedulePatientAppointment(Long id,Long patientId, CreateAppointmentRequest request) {
@@ -115,11 +114,12 @@ public class DoctorService {
         return "Appointment scheduled successfully";
     }
 
-    public GetConsultationResponses getDoctorConsultations(Long id) {
+    public List<GetConsultationResponse> getDoctorConsultations(Long id) {
         Doctor doctor = getDoctorByUserId(id);
         List<GetConsultationResponse> consultationResponsesList = consultationService.getConsultationDetails(doctor.getPatientConsultations());
-        GetConsultationResponses response = new GetConsultationResponses();
-        response.setConsultations(consultationResponsesList);
-        return response;
+        if(consultationResponsesList.isEmpty()){
+            throw new ResourceNotFoundException("No consultations found for this doctor");
+        }
+        return consultationResponsesList;
     }
 }

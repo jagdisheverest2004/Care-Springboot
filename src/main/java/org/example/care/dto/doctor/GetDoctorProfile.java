@@ -1,8 +1,10 @@
 package org.example.care.dto.doctor;
 
 import lombok.Data;
-import org.example.care.dto.appointment.GetAppointmentResponses;
-import org.example.care.dto.consultation.GetConsultationResponses;
+import org.example.care.dto.appointment.GetAppointmentResponse;
+import org.example.care.dto.consultation.GetConsultationResponse;
+
+import java.util.List;
 
 @Data
 public class GetDoctorProfile {
@@ -10,6 +12,6 @@ public class GetDoctorProfile {
     private String specialization;
     private String contactInfo;
     private String hospitalName;
-    private GetAppointmentResponses appointments;
-    private GetConsultationResponses consultations;
+    private List<GetAppointmentResponse> appointments;
+    private List<GetConsultationResponse> consultations;
 }

@@ -40,7 +40,6 @@ public class Consultation {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    @Column(nullable = false)
     private LocalDateTime visitedAt;
 
     // FIXED: mappedBy MUST match the variable name in MedicalRecord.java ("consultation")
@@ -50,7 +49,7 @@ public class Consultation {
     @OneToMany(mappedBy = "visit", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Prescription> prescriptions = new ArrayList<>();
 
-    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private RiskLevel riskLevel;
+    @Builder.Default
+    private RiskLevel riskLevel = RiskLevel.MEDIUM;
 }

@@ -7,8 +7,8 @@ import java.time.LocalDateTime;
 
 @Data
 public class CreateAppointmentRequest {
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime appointmentDateTime;
-
     private String reasonForAppointment;
+
+    @JsonFormat(pattern = "yyyy-MM-dd 'T' HH:mm:ss")
+    private LocalDateTime appointmentDateTime;
 }

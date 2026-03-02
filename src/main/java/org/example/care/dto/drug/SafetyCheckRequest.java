@@ -10,9 +10,6 @@ import lombok.Setter;
 @Setter
 public class SafetyCheckRequest {
 
-    @Column(nullable = false)
-    private Long patientId;
-
     @NotEmpty
     private List<String> newDrugs;
 }

@@ -76,7 +76,7 @@ public class DoctorController {
 
 
     @PreAuthorize("hasRole('DOCTOR')")
-    @PostMapping(path = "/patients/{consultationId}/records/xray", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(path = "/patients/consultations/{consultationId}/records/xray", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MedicalRecordResponse> uploadXrayForAnalysis(@PathVariable Long consultationId,
                                                                        @RequestParam("file") MultipartFile file
     ) {
@@ -86,7 +86,7 @@ public class DoctorController {
     }
 
     @PreAuthorize("hasRole('DOCTOR')")
-    @PostMapping(path = "/patients/{consultationId}/records/report", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(path = "/patients/consultations/{consultationId}/records/report", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MedicalRecordResponse> uploadReportForSummary(@PathVariable Long consultationId,
                                                                        @RequestParam("file") MultipartFile file
     ) {
@@ -96,10 +96,10 @@ public class DoctorController {
     }
 
     @PreAuthorize("hasRole('DOCTOR')")
-    @PostMapping("/check-safety")
-    public ResponseEntity<Map<String, Object>> checkDrugSafety(@Validated @RequestBody SafetyCheckRequest request) {
+    @PostMapping("/patients/{patientId}/check-safety")
+    public ResponseEntity<Map<String, Object>> checkDrugSafety(@PathVariable Long patientId, @Validated @RequestBody SafetyCheckRequest request) {
 
-        Map<String,Object> response = patientService.checkDrugSafety(request);
+        Map<String,Object> response = patientService.checkDrugSafety(patientId,request);
         return ResponseEntity.ok(response);
     }
 

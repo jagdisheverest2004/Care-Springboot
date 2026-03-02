@@ -18,10 +18,8 @@ import org.example.care.model.enumeration.RiskLevel;
 import org.example.care.repository.ConsultationRepository;
 import org.example.care.repository.PatientRepository;
 import org.example.care.repository.UserRepository;
-import org.example.care.security.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -71,7 +69,7 @@ public class PatientService {
         patientRetreival.setChronicConditions(patient.getChronicConditions());
         patientRetreival.setAllergies(patient.getAllergies());
 
-        List<GetConsultationForPatientResponse> doctorVisits = consultationService.getPatientDoctorDetails(patient.getVisits());
+        List<GetConsultationForPatientResponse> doctorVisits = consultationService.getConsultationForPatientResponses(patient.getVisits());
         patientRetreival.setDoctorVisits(doctorVisits);
 
         return patientRetreival;
@@ -137,8 +135,8 @@ public class PatientService {
         return medicalRecordService.uploadMedicalRecord(consultation ,MedicalRecordType.REPORT, file, narrative);
     }
 
-    public Map<String, Object> checkDrugSafety(SafetyCheckRequest request) {
-        Patient patient = this.getPatientById(request.getPatientId());
+    public Map<String, Object> checkDrugSafety(Long patientId,SafetyCheckRequest request) {
+        Patient patient = this.getPatientById(patientId);
         List<String> currentDrugNames = patient.getPrescriptions().stream()
                 .filter(pd -> pd.getEndDate().isAfter(ChronoLocalDate.from(LocalDate.now())))
                 .map(pd -> pd.getDrug().getDrugName())

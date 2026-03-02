@@ -1,7 +1,7 @@
 package org.example.care.dto.patient;
 
 import lombok.Data;
-import org.example.care.dto.drug.PatientDrugRetreival;
+import org.example.care.dto.drug.PrescriptionRetreival;
 import org.example.care.dto.medicalrecord.MedicalRecordRetreival;
 import org.example.care.model.enumeration.RiskLevel;
 
@@ -17,6 +17,6 @@ public class GetConsultationForPatientResponse {
     private String notes;
     private RiskLevel riskLevel;
     private List<MedicalRecordRetreival> medicalRecords;
-    private List<PatientDrugRetreival> drugsPrescribed;
+    private List<PrescriptionRetreival> drugsPrescribed;
     private LocalDateTime visitedAt;
 }
