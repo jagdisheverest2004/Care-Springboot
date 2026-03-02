@@ -49,7 +49,7 @@ public class AppointmentService {
             response.setAppointmentId(app.getId());
             response.setPatientId(app.getPatient().getId());
             response.setPatientName(app.getPatient().getName());
-            response.setAppointmentDateTime(app.getAppointmentDate());
+            response.setAppointmentDateTime(app.getAppointmentDateTime());
             response.setAppointmentStatus(app.getStatus());
             response.setReasonForAppointment(app.getReasonForAppointment());
             return response;
@@ -60,23 +60,26 @@ public class AppointmentService {
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new RuntimeException("Patient not found with id: " + patientId));
 
+        helperForAppointmentCreation(doctor, request, patient);
+    }
+
+    public void helperForAppointmentCreation(Doctor doctor, CreateAppointmentRequest request, Patient patient) {
         Appointment appointment = new Appointment();
         appointment.setDoctor(doctor);
         appointment.setPatient(patient);
-        appointment.setAppointmentDate(request.getAppointmentDateTime());
+        appointment.setAppointmentDateTime(request.getAppointmentDateTime());
         appointment.setReasonForAppointment(request.getReasonForAppointment());
         appointmentRepository.save(appointment);
+        patient.getAppointments().add(appointment);
+        doctor.getAppointments().add(appointment);
+        patientRepository.save(patient);
+        doctorRepository.save(doctor);
     }
 
     public void createPatientAppointment(Patient patient,Long doctorId, CreateAppointmentRequest request){
         Doctor doctor = doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + doctorId));
 
-        Appointment appointment = new Appointment();
-        appointment.setDoctor(doctor);
-        appointment.setPatient(patient);
-        appointment.setAppointmentDate(request.getAppointmentDateTime());
-        appointment.setReasonForAppointment(request.getReasonForAppointment());
-        appointmentRepository.save(appointment);
+        helperForAppointmentCreation(doctor, request, patient);
     }
 }

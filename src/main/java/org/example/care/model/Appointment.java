@@ -30,7 +30,7 @@ public class Appointment {
     private String reasonForAppointment;
 
     @Column(nullable = false)
-    private LocalDateTime appointmentDate;
+    private LocalDateTime appointmentDateTime;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -9,5 +9,6 @@ import java.time.LocalDateTime;
 public class CreateAppointmentRequest {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime appointmentDateTime;
+
     private String reasonForAppointment;
 }
