@@ -10,6 +10,6 @@ import java.util.List;
 
 public interface AppointmentRepository extends JpaRepository<Appointment,Long> {
 
-    @Query("SELECT a FROM Appointment a WHERE a.status = :appointmentStatus AND a.appointmentDate < :now")
+    @Query("SELECT a FROM Appointment a WHERE a.status = :appointmentStatus AND a.appointmentDateTime < :now")
     List<Appointment> findByStatusAndAppointmentDateBefore(AppointmentStatus appointmentStatus, LocalDateTime now);
 }
